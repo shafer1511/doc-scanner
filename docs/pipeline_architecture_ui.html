@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Sơ Đồ Kiến Trúc Pipeline Document Scanner</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Inter', Roboto, Helvetica, Arial, sans-serif;
+      background-color: #F8FAFC;
+      color: #0F172A;
+      padding: 30px 40px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-width: 1650px;
+    }
+    .canvas {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 16px;
+      padding: 36px 40px;
+      width: 1620px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+    }
+    .header-banner {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .header-banner h2 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #2563EB;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .header-banner h1 {
+      font-size: 24px;
+      font-weight: 800;
+      color: #0F172A;
+      letter-spacing: -0.01em;
+      margin-bottom: 6px;
+    }
+    .header-banner p {
+      font-size: 13px;
+      font-style: italic;
+      color: #64748B;
+    }
+    
+    /* Main Pipeline Horizontal Flex */
+    .pipeline-row {
+      display: flex;
+      align-items: stretch;
+      justify-content: space-between;
+      gap: 0;
+      margin-bottom: 24px;
+    }
+
+    /* Cards */
+    .card {
+      background: #FFFFFF;
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      transition: transform 0.2s;
+    }
+    .card-header {
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      text-align: center;
+      color: #FFFFFF;
+      letter-spacing: 0.02em;
+    }
+    .card-file {
+      font-size: 11px;
+      font-style: italic;
+      font-weight: 600;
+      text-align: center;
+      padding: 4px 8px;
+      background: #F8FAFC;
+      border-bottom: 1px dashed #E2E8F0;
+    }
+    .card-body {
+      padding: 12px 14px;
+      font-size: 11.5px;
+      line-height: 1.55;
+      color: #334155;
+      flex: 1;
+    }
+    .card-body ul {
+      list-style-type: disc;
+      padding-left: 16px;
+    }
+    .card-body li {
+      margin-bottom: 4px;
+    }
+    .card-body strong {
+      color: #0F172A;
+    }
+
+    /* Specific Card Variants */
+    .card-input {
+      width: 200px;
+      border: 1.5px solid #3B82F6;
+      background: #EFF6FF;
+    }
+    .card-input .card-header { background: #3B82F6; }
+
+    .card-canny {
+      width: 220px;
+      border: 1.5px solid #0284C7;
+    }
+    .card-canny .card-header { background: #0284C7; }
+    .card-canny .card-file { color: #0369A1; }
+
+    .card-hough {
+      width: 225px;
+      border: 1.5px solid #0D9488;
+    }
+    .card-hough .card-header { background: #0D9488; }
+    .card-hough .card-file { color: #0F766E; }
+
+    .card-quad {
+      width: 235px;
+      border: 1.5px solid #D97706;
+    }
+    .card-quad .card-header { background: #D97706; }
+    .card-quad .card-file { color: #B45309; }
+
+    .card-warp {
+      width: 220px;
+      border: 1.5px solid #16A34A;
+    }
+    .card-warp .card-header { background: #16A34A; }
+    .card-warp .card-file { color: #15803D; }
+
+    .card-thresh {
+      width: 225px;
+      border: 1.5px solid #7C3AED;
+    }
+    .card-thresh .card-header { background: #7C3AED; }
+    .card-thresh .card-file { color: #6D28D9; }
+
+    /* Flow Connectors */
+    .connector {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 8px;
+      min-width: 60px;
+    }
+    .connector-badge {
+      background: #FFFFFF;
+      border: 1px solid #CBD5E1;
+      padding: 3px 6px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #475569;
+      text-align: center;
+      white-space: nowrap;
+      margin-bottom: 6px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .connector-arrow {
+      width: 32px;
+      height: 14px;
+    }
+    .connector-arrow svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Bottom Branches Row */
+    .branches-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-top: 10px;
+      padding: 0 10px;
+    }
+    .branch-left-spacer {
+      width: 710px;
+    }
+    .branch-reject {
+      width: 250px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .branch-arrow-down {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .branch-arrow-down .badge-down {
+      background: #FEF2F2;
+      border: 1px solid #FCA5A5;
+      color: #DC2626;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-bottom: 4px;
+    }
+    .card-reject {
+      width: 100%;
+      border: 1.5px solid #EF4444;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #FEF2F2;
+    }
+    .card-reject .card-header {
+      background: #DC2626;
+      font-size: 12px;
+      padding: 8px;
+    }
+    .card-reject .card-body {
+      padding: 10px 12px;
+      font-size: 11px;
+      color: #7F1D1D;
+    }
+
+    .branch-mid-spacer {
+      flex: 1;
+    }
+
+    .branch-accept {
+      width: 235px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .card-accept {
+      width: 100%;
+      border: 2px solid #7C3AED;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #FAF5FF;
+    }
+    .card-accept .card-header {
+      background: #7C3AED;
+      font-size: 12px;
+      padding: 8px;
+    }
+    .card-accept .card-body {
+      padding: 10px 12px;
+      font-size: 11px;
+      color: #581C87;
+    }
+
+    /* Footer Note Box */
+    .footer-note {
+      margin-top: 28px;
+      background: #F1F5F9;
+      border: 1px solid #CBD5E1;
+      border-radius: 8px;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      font-size: 11px;
+      color: #334155;
+      font-weight: 600;
+      line-height: 1.6;
+    }
+    .footer-note span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .footer-note span::before {
+      content: "•";
+      color: #2563EB;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="canvas">
+    <!-- Header -->
+    <div class="header-banner">
+      <h2>TRƯỜNG ĐH KHOA HỌC TỰ NHIÊN - ĐHQG-HCM • BÁO CÁO GIỮA KỲ XỬ LÝ ẢNH & VIDEO</h2>
+      <h1>KIẾN TRÚC TỔNG THỂ HỆ THỐNG DOCUMENT SCANNER PIPELINE</h1>
+      <p>Pipeline 5 giai đoạn xử lý độc lập từ ảnh chụp thiết bị di động đến ảnh nhị phân số hóa</p>
+    </div>
+
+    <!-- Main 5 Stages Row -->
+    <div class="pipeline-row">
+      <!-- Input Card -->
+      <div class="card card-input">
+        <div class="card-header">ẢNH ĐẦU VÀO</div>
+        <div class="card-body">
+          <p style="font-weight: 700; color: #1E3A8A; margin-bottom: 6px;">Ảnh chụp di động (RGB)</p>
+          <p style="font-size: 10.5px; color: #475569; margin-bottom: 8px;">Kích thước: <code>(H, W, 3), uint8</code></p>
+          <ul>
+            <li>5 điều kiện chụp thực tế</li>
+            <li>Góc xiên / Bóng đổ gắt</li>
+            <li>Nền bàn nhiễu hình chữ nhật</li>
+            <li>Biên tương phản cực thấp</li>
+            <li>Nhóm ảnh âm tính đối chứng</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Connector 0 -> 1 -->
+      <div class="connector">
+        <div class="connector-badge" style="color: #2563EB;">to_gray</div>
+        <div class="connector-arrow">
+          <svg viewBox="0 0 32 14" fill="none"><path d="M0 7H28M28 7L22 1M28 7L22 13" stroke="#2563EB" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+
+      <!-- Stage 1: Canny -->
+      <div class="card card-canny">
+        <div class="card-header">1. CANNY EDGE</div>
+        <div class="card-file">src/core/canny.py</div>
+        <div class="card-body">
+          <ul>
+            <li><strong>Gaussian Blur 1D:</strong> σ = 1.2, r = 3σ, lọc khả tách 2 chiều</li>
+            <li><strong>Toán tử Sobel 3×3:</strong> Tính Gx, Gy, Magnitude & Hướng θ</li>
+            <li><strong>Non-Max Suppression:</strong> Lượng tử hóa 4 góc (0°, 45°, 90°, 135°)</li>
+            <li><strong>Ngưỡng kép:</strong> T_low=40, T_high=120</li>
+            <li><strong>Hysteresis liên thông:</strong> Duyệt hàng đợi BFS 8 lân cận</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Connector 1 -> 2 -->
+      <div class="connector">
+        <div class="connector-badge" style="color: #0284C7;">Edge Map<br/>(H × W)</div>
+        <div class="connector-arrow">
+          <svg viewBox="0 0 32 14" fill="none"><path d="M0 7H28M28 7L22 1M28 7L22 13" stroke="#0284C7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+
+      <!-- Stage 2: Hough -->
+      <div class="card card-hough">
+        <div class="card-header">2. HOUGH TRANSFORM</div>
+        <div class="card-file">src/core/hough.py</div>
+        <div class="card-body">
+          <ul>
+            <li><strong>Không gian cực:</strong> ρ = x·cosθ + y·sinθ (Δρ=1 px, Δθ=1°)</li>
+            <li><strong>Gom phiếu vector:</strong> Tối ưu bằng <code>np.bincount</code></li>
+            <li><strong>Cực đại địa phương:</strong> Maximum filter 5×5 (T_votes ≥ 50)</li>
+            <li><strong>Triệt tiêu trùng:</strong> Δρ &lt; 20 px, Δθ &lt; 10° (xử lý đối đỉnh)</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Connector 2 -> 3 -->
+      <div class="connector">
+        <div class="connector-badge" style="color: #0D9488;">K đường<br/>{(ρ, θ)}</div>
+        <div class="connector-arrow">
+          <svg viewBox="0 0 32 14" fill="none"><path d="M0 7H28M28 7L22 1M28 7L22 13" stroke="#0D9488" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+
+      <!-- Stage 3: Quad -->
+      <div class="card card-quad">
+        <div class="card-header">3. QUAD SELECTION</div>
+        <div class="card-file">src/core/quadrilateral.py</div>
+        <div class="card-body">
+          <ul>
+            <li><strong>Tổ hợp 4 đường:</strong> Giải giao điểm <code>np.linalg.solve</code></li>
+            <li><strong>Kiểm tra lồi:</strong> Đồng nhất dấu tích có hướng 4 cạnh</li>
+            <li><strong>Sắp xếp 4 góc:</strong> Chiều kim đồng hồ từ min(x+y)</li>
+            <li><strong>Hàm chấm điểm:</strong> Score = 0.5·Support + 0.5·Area</li>
+            <li><strong>Ngưỡng diện tích:</strong> 0.05 ≤ Area_ratio ≤ 0.98</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Connector 3 -> 4 -->
+      <div class="connector">
+        <div class="connector-badge" style="color: #16A34A;">4 Đỉnh lồi<br/>(4 × 2)</div>
+        <div class="connector-arrow">
+          <svg viewBox="0 0 32 14" fill="none"><path d="M0 7H28M28 7L22 1M28 7L22 13" stroke="#16A34A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+
+      <!-- Stage 4: Warping -->
+      <div class="card card-warp">
+        <div class="card-header">4. WARPING</div>
+        <div class="card-file">src/core/warping.py</div>
+        <div class="card-body">
+          <ul>
+            <li><strong>Kích thước đích:</strong> W_max, H_max tính từ cạnh đối diện</li>
+            <li><strong>Ma trận phối cảnh:</strong> Ma trận H (3×3)</li>
+            <li><strong>Warping:</strong> Nắn thẳng bằng <code>cv2.warpPerspective</code></li>
+            <li><strong>Tự cài đặt:</strong> <code>bilinear_sample_gray</code> nội suy song tuyến</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Connector 4 -> 5 -->
+      <div class="connector">
+        <div class="connector-badge" style="color: #7C3AED;">Ảnh phẳng<br/>(H' × W')</div>
+        <div class="connector-arrow">
+          <svg viewBox="0 0 32 14" fill="none"><path d="M0 7H28M28 7L22 1M28 7L22 13" stroke="#7C3AED" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+
+      <!-- Stage 5: Thresholding -->
+      <div class="card card-thresh">
+        <div class="card-header">5. NHỊ PHÂN HÓA</div>
+        <div class="card-file">src/core/thresholding.py</div>
+        <div class="card-body">
+          <ul>
+            <li><strong>Otsu toàn cục:</strong> Tối đa hóa phương sai liên lớp qua Histogram</li>
+            <li><strong>Sauvola thích nghi:</strong> w=25, k=0.20, R=128<br/>T = m · [1 + k(s/R - 1)]</li>
+            <li><strong>Uniform filter:</strong> Tính nhanh mean m, std s qua mảng bình phương</li>
+            <li><strong>Khử bóng râm:</strong> Bóc tách nét chữ mảnh sạch sẽ</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Branches Row -->
+    <div class="branches-row">
+      <div class="branch-left-spacer"></div>
+
+      <!-- Rejection Card (Below Stage 3) -->
+      <div class="branch-reject">
+        <div class="branch-arrow-down">
+          <div class="badge-down">Không hợp lệ / Âm tính</div>
+          <svg width="14" height="24" viewBox="0 0 14 24" fill="none">
+            <path d="M7 0V20M7 20L1 14M7 20L13 14" stroke="#DC2626" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="card-reject">
+          <div class="card-header">TRẢ VỀ REJECTED (EARLY EXIT)</div>
+          <div class="card-body">
+            • Không phát hiện đủ 4 cạnh độc lập<br/>
+            • Không tồn tại tứ giác lồi hợp lệ<br/>
+            • Ảnh âm tính (Gạch lát sàn, viền laptop)<br/>
+            • Ghi nhận <code>status='rejected'</code> kèm lý do
+          </div>
+        </div>
+      </div>
+
+      <div class="branch-mid-spacer"></div>
+
+      <!-- Final Output Card (Below Stage 5) -->
+      <div class="branch-accept">
+        <div class="branch-arrow-down">
+          <div class="badge-down" style="background: #F3E8FF; border-color: #D8B4FE; color: #7C3AED;">Nhị phân hoàn tất</div>
+          <svg width="14" height="24" viewBox="0 0 14 24" fill="none">
+            <path d="M7 0V20M7 20L1 14M7 20L13 14" stroke="#7C3AED" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="card-accept">
+          <div class="card-header">KẾT QUẢ ĐẦU RA (ACCEPTED)</div>
+          <div class="card-body">
+            • Trang tài liệu nhìn thẳng phẳng<br/>
+            • Ảnh nhị phân chữ rõ nét, nền sạch<br/>
+            • Tách nền sạch vùng bóng đổ gắt<br/>
+            • <code>status='accepted'</code>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Note -->
+    <div class="footer-note">
+      <span><strong>Ràng buộc kỹ thuật đồ án:</strong> 100% tự cài đặt các module lõi từ NumPy/SciPy (không gọi cv2.Canny, cv2.HoughLines, cv2.threshold)</span>
+      <span><strong>Tốc độ CPU thuần:</strong> ~728.8 ms (Test) - 1098.5 ms (Dev)</span>
+      <span><strong>Hiệu năng:</strong> Đạt 80.8% Accepted trên tập Test (vượt xa 23.1% Baseline OpenCV)</span>
+    </div>
+  </div>
+
+</body>
+</html>

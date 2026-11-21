@@ -1,0 +1,46 @@
+# ==========================================
+# GITIGNORE CHO ĐỒ ÁN DOCUMENT SCANNER & MÔN HỌC
+# ==========================================
+
+# 1. BẢO MẬT: TUYỆT ĐỐI KHÔNG ĐẨY API KEY LÊN GITHUB
+proxy_9router.py
+proxy.log
+.tmp_task.md
+*.env
+*.key
+credentials.json
+
+# 2. FILE TẠM MICROSOFT OFFICE & HỆ THỐNG
+~$*.docx
+~$*.xlsx
+~$*.pptx
+Bao_cao_Giua_Ky_Document_Scanner_Final.docx
+Thumbs.db
+.DS_Store
+
+# 3. PYTHON CACHE & TEST CACHE
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.codegraph/
+.vscode/
+.idea/
+
+# 4. DUNG LƯỢNG NẶNG: BỎ 430MB ẢNH TRUNG GIAN DUMP TỪNG BƯỚC
+# Chỉ giữ lại kết quả CSV và ảnh báo cáo trong outputs/figures/
+outputs/intermediates_dev/
+outputs/intermediates_test/
+!outputs/figures/
+!outputs/*.csv
+
+# 5. FILE BIÊN DỊCH NHỊ PHÂN & FILE RÁC
+*.exe
+*.obj
+*.o
+*.raw
+*.mp4
+*.tmp
+test_capture.png
+test_chrome.png
+test_edge.png

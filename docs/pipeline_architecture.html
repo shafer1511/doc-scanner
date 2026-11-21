@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kiến Trúc Hệ Thống Document Scanner Pipeline</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --primary: #1E40AF;
+      --bg: #0F172A;
+      --card-bg: #1E293B;
+      --text: #F8FAFC;
+      --accent: #38BDF8;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%);
+      color: var(--text);
+      margin: 0;
+      padding: 40px 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .header {
+      text-align: center;
+      max-width: 900px;
+      margin-bottom: 30px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 6px 16px;
+      background: rgba(56, 189, 248, 0.15);
+      color: #38BDF8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      margin: 0 0 10px 0;
+      background: linear-gradient(to right, #FFFFFF, #93C5FD);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    p.subtitle {
+      font-size: 15px;
+      color: #94A3B8;
+      margin: 0;
+      line-height: 1.5;
+    }
+    .diagram-container {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 30px;
+      width: 95%;
+      max-width: 1250px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      overflow-x: auto;
+    }
+    .mermaid {
+      display: flex;
+      justify-content: center;
+    }
+    .footer-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      width: 95%;
+      max-width: 1250px;
+      margin-top: 30px;
+    }
+    .card {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 16px 20px;
+    }
+    .card h3 {
+      font-size: 14px;
+      font-weight: 700;
+      margin: 0 0 8px 0;
+      color: #38BDF8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card p {
+      font-size: 13px;
+      color: #CBD5E1;
+      margin: 0;
+      line-height: 1.5;
+    }
+    .btn-export {
+      margin-top: 25px;
+      padding: 10px 24px;
+      background: #2563EB;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-export:hover {
+      background: #1D4ED8;
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="badge">Đồ Án Giữa Kỳ • Nhập Môn Xử Lý Ảnh & Video</div>
+    <h1>SƠ ĐỒ KIẾN TRÚC PIPELINE DOCUMENT SCANNER</h1>
+    <p class="subtitle">Quy trình 5 giai đoạn xử lý khép kín: Tự cài đặt 100% bằng NumPy/SciPy theo chuẩn RULE.md</p>
+  </div>
+
+  <div class="diagram-container">
+    <pre class="mermaid">
+flowchart LR
+    %% Styles
+    classDef inputStyle fill:#1E293B,stroke:#3B82F6,stroke-width:2px,color:#FFFFFF,rx:8,ry:8;
+    classDef cannyStyle fill:#0F172A,stroke:#0284C7,stroke-width:2px,color:#FFFFFF,rx:8,ry:8;
+    classDef houghStyle fill:#0F172A,stroke:#0D9488,stroke-width:2px,color:#FFFFFF,rx:8,ry:8;
+    classDef quadStyle fill:#0F172A,stroke:#D97706,stroke-width:2px,color:#FFFFFF,rx:8,ry:8;
+    classDef warpStyle fill:#0F172A,stroke:#16A34A,stroke-width:2px,color:#FFFFFF,rx:8,ry:8;
+    classDef threshStyle fill:#0F172A,stroke:#7C3AED,stroke-width:2px,color:#FFFFFF,rx:8,ry:8;
+    classDef rejectStyle fill:#450A0A,stroke:#EF4444,stroke-width:2px,color:#FECACA,rx:8,ry:8;
+    classDef acceptStyle fill:#064E3B,stroke:#10B981,stroke-width:2px,color:#D1FAE5,rx:8,ry:8;
+
+    %% Nodes
+    IN["<b>ẢNH ĐẦU VÀO</b><br/>• Ảnh chụp RGB di động<br/>• Shape: (H, W, 3)<br/>• 5 điều kiện chụp"]:::inputStyle
+
+    subgraph M1 ["1. CANNY EDGE DETECTION (src/core/canny.py)"]
+        C1["Gaussian Blur 1D (σ=1.2)"] --> C2["Sobel 3x3 Gradient (Gx, Gy)"]
+        C2 --> C3["Non-Maximum Suppression (4 góc)"]
+        C3 --> C4["Ngưỡng kép (40, 120) & BFS 8-liên thông"]
+    end
+    class M1 cannyStyle;
+
+    subgraph M2 ["2. HOUGH TRANSFORM (src/core/hough.py)"]
+        H1["Tọa độ cực ρ = x·cosθ + y·sinθ"] --> H2["Accumulator (np.bincount)"]
+        H2 --> H3["Maximum Filter 5x5 (T=50)"]
+        H3 --> H4["Triệt tiêu đường trùng (Δρ<20, Δθ<10°)"]
+    end
+    class M2 houghStyle;
+
+    subgraph M3 ["3. QUAD SELECTION (src/core/quadrilateral.py)"]
+        Q1["Giải giao điểm solve()"] --> Q2["Kiểm tra lồi (Cross Product)"]
+        Q2 --> Q3["Sắp xếp 4 góc theo chiều kim đồng hồ"]
+        Q3 --> Q4{"Lọc diện tích<br/>& Edge Support"}
+    end
+    class M3 quadStyle;
+
+    REJ["<b>TRẢ VỀ REJECTED</b><br/>• Không tìm thấy tứ giác hợp lệ<br/>• Ảnh âm tính (Gạch/Màn hình)<br/>• Ghi nhận status='rejected'"]:::rejectStyle
+
+    subgraph M4 ["4. HOMOGRAPHY & WARPING (src/core/warping.py)"]
+        W1["Tính kích thước phẳng W_max, H_max"] --> W2["Ma trận phối cảnh 3x3 H"]
+        W2 --> W3["Warp Perspective & bilinear_sample_gray"]
+    end
+    class M4 warpStyle;
+
+    subgraph M5 ["5. THRESHOLDING (src/core/thresholding.py)"]
+        T1["Ngưỡng toàn cục Otsu (Histogram)"] 
+        T2["Ngưỡng cục bộ Sauvola (w=25, k=0.2, R=128)<br/>T = m · [1 + k(s/R - 1)]"]
+    end
+    class M5 threshStyle;
+
+    OUT["<b>KẾT QUẢ ĐẦU RA</b><br/>• Trang tài liệu nhìn thẳng<br/>• Ảnh nhị phân chữ rõ nét<br/>• Tách sạch bóng râm<br/>• status='accepted'"]:::acceptStyle
+
+    %% Connections
+    IN -->|"Grayscale (H, W)"| C1
+    C4 -->|"Binary Edge Map"| H1
+    H4 -->|"K đường thẳng {(ρ, θ)}"| Q1
+    Q4 -->|"Không hợp lệ"| REJ
+    Q4 -->|"4 Đỉnh lồi hợp lệ"| W1
+    W3 -->|"Ảnh tài liệu phẳng"| T1
+    W3 -->|"Ảnh tài liệu phẳng"| T2
+    T2 --> OUT
+    </pre>
+  </div>
+
+  <div class="footer-cards">
+    <div class="card">
+      <h3>⚡ Tốc Độ CPU Thuần</h3>
+      <p>~728.8 ms trên tập Test và ~1098.5 ms trên tập Development. Vector hóa bằng <code>np.bincount</code> giúp tăng tốc 10x so với vòng lặp.</p>
+    </div>
+    <div class="card">
+      <h3>🛡️ Chống Gian Lận (RULE.md)</h3>
+      <p>100% tự cài đặt các thuật toán cốt lõi trong <code>src/core/</code>. Tuyệt đối không dùng <code>cv2.Canny</code>, <code>cv2.HoughLines</code>, <code>cv2.threshold</code>.</p>
+    </div>
+    <div class="card">
+      <h3>🎯 Độ Chính Xác</h3>
+      <p>Nâng tỷ lệ phát hiện tài liệu từ 23.1% (OpenCV Contour) lên 80.8% trên tập Test nhờ cơ chế tích lũy bằng chứng toàn cục của Hough.</p>
+    </div>
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      flowchart: {
+        curve: 'basis',
+        nodeSpacing: 40,
+        rankSpacing: 40
+      }
+    });
+  </script>
+</body>
+</html>
