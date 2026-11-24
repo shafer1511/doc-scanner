@@ -1,20 +1,18 @@
-"""Batch document-scanner pipeline: Canny -> Hough -> quadrilateral -> warp -> threshold."""
-
 import argparse
 import csv
-import math
+import json
 import os
 import time
-
+from pathlib import Path
 import cv2
 import numpy as np
-from shapely.geometry import Polygon
 
-from src.core.canny import canny_edge_detector
-from src.core.hough import detect_hough_lines
-from src.core.quadrilateral import find_document_quadrilateral, order_corners_perimeter
-from src.core.thresholding import compute_binarization_metrics, otsu_threshold, sauvola_threshold
+from src.core.canny import canny_edge_detection, to_grayscale
+from src.core.hough import find_hough_peaks, hough_transform
+from src.core.quadrilateral import find_document_quad, order_corners_perimeter, polygon_area
+from src.core.thresholding import otsu_threshold, sauvola_threshold
 from src.core.warping import warp_document
+
 
 CSV_COLUMNS = [
     "image_id",
@@ -31,453 +29,413 @@ CSV_COLUMNS = [
     "resolution",
 ]
 
-IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp")
-
-DEFAULT_PARAMS = {
-    "apply_blur": True,
-    "suppress_duplicates": True,
+DEFAULT_CONFIG = {
+    "work_max_dim": 640,
+    "sigma": 1.4,
+    "low_ratio": 0.06,
+    "high_ratio": 0.16,
+    "use_gaussian": True,
+    "rho_res": 1.0,
+    "theta_res_deg": 1.0,
+    "hough_thresh_ratio": 0.24,
+    "hough_min_votes": 45,
+    "top_k_lines": 20,
+    "hough_suppress": True,
+    "rho_supp": 18.0,
+    "theta_supp_deg": 12.0,
     "use_edge_support": True,
-    "top_k_lines": 16,
-    "canny_low": 40.0,
-    "canny_high": 120.0,
-    "canny_sigma": 1.2,
-    "hough_threshold": 50,
+    "min_area_ratio": 0.14,
+    "max_area_ratio": 0.98,
+    "min_edge_support": 0.72,
+    "min_side_support": 0.50,
+    "min_angle_deg": 45.0,
+    "max_angle_deg": 135.0,
     "sauvola_window": 25,
     "sauvola_k": 0.2,
+    "warp_max_dim": 1200,
 }
 
 
-def _to_gray_uint8(image: np.ndarray) -> np.ndarray:
-    """Convert BGR/BGRA/grayscale input to contiguous uint8 grayscale."""
-    arr = np.asarray(image)
-    if arr.ndim == 2:
-        gray = arr
-    elif arr.ndim == 3 and arr.shape[2] == 1:
-        gray = arr[:, :, 0]
-    elif arr.ndim == 3 and arr.shape[2] == 4:
-        gray = cv2.cvtColor(arr, cv2.COLOR_BGRA2GRAY)
-    elif arr.ndim == 3:
-        gray = cv2.cvtColor(arr, cv2.COLOR_BGR2GRAY)
-    else:
-        raise ValueError("image must be a 2D or 3D array")
-    if gray.dtype != np.uint8:
-        if np.issubdtype(gray.dtype, np.floating) and gray.size and float(gray.max()) <= 1.0:
-            gray = gray * 255.0
-        gray = np.clip(gray, 0.0, 255.0).astype(np.uint8)
-    return np.ascontiguousarray(gray)
+def _clip_convex_polygon(subject: np.ndarray, clipper: np.ndarray) -> np.ndarray:
+    """Clip subject polygon against convex clipper polygon via Sutherland-Hodgman."""
+    def _inside(p: np.ndarray, a: np.ndarray, b: np.ndarray, sign: float) -> bool:
+        return sign * ((b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0])) >= -1e-9
+
+    def _intersect(p1: np.ndarray, p2: np.ndarray, a: np.ndarray, b: np.ndarray) -> np.ndarray:
+        dc = a - b
+        dp = p1 - p2
+        n1 = a[0] * b[1] - a[1] * b[0]
+        n2 = p1[0] * p2[1] - p1[1] * p2[0]
+        denom = dc[0] * dp[1] - dc[1] * dp[0]
+        if abs(denom) < 1e-12:
+            return (p1 + p2) * 0.5
+        return np.array([(n1 * dp[0] - n2 * dc[0]) / denom, (n1 * dp[1] - n2 * dc[1]) / denom], dtype=np.float64)
+
+    clip_f = np.asarray(clipper, dtype=np.float64)
+    c_area_signed = 0.5 * float(np.dot(clip_f[:, 0], np.roll(clip_f[:, 1], -1)) - np.dot(clip_f[:, 1], np.roll(clip_f[:, 0], -1)))
+    sign = 1.0 if c_area_signed >= 0.0 else -1.0
+
+    output = [np.asarray(pt, dtype=np.float64) for pt in subject]
+    n_c = len(clip_f)
+    for i in range(n_c):
+        a = clip_f[i]
+        b = clip_f[(i + 1) % n_c]
+        input_list = output
+        output = []
+        if not input_list:
+            break
+        s = input_list[-1]
+        for e in input_list:
+            if _inside(e, a, b, sign):
+                if not _inside(s, a, b, sign):
+                    output.append(_intersect(s, e, a, b))
+                output.append(e)
+            elif _inside(s, a, b, sign):
+                output.append(_intersect(s, e, a, b))
+            s = e
+    return np.array(output, dtype=np.float64) if output else np.empty((0, 2), dtype=np.float64)
 
 
-def compute_polygon_iou(pred_corners: np.ndarray, gt_corners: np.ndarray) -> float:
-    """IoU of two 4-vertex polygons via shapely; invalid/empty/zero-union polygons give 0.0."""
-    pred = np.asarray(pred_corners, dtype=np.float64)
-    gt = np.asarray(gt_corners, dtype=np.float64)
-    if pred.shape != (4, 2) or gt.shape != (4, 2):
-        return 0.0
-    poly_pred = Polygon(pred)
-    poly_gt = Polygon(gt)
-    if poly_pred.is_empty or poly_gt.is_empty:
-        return 0.0
-    if not poly_pred.is_valid or not poly_gt.is_valid:
-        return 0.0
-    union_area = poly_pred.union(poly_gt).area
-    if union_area <= 0.0:
-        return 0.0
-    iou = poly_pred.intersection(poly_gt).area / union_area
-    return float(min(max(iou, 0.0), 1.0))
-
-
-def compute_corner_error_norm(
-    pred_corners: np.ndarray,
-    gt_corners: np.ndarray,
-    image_shape: tuple[int, int],
-) -> float:
-    """Min mean corner distance over 4 cyclic rolls, divided by the image diagonal."""
-    pred = np.asarray(pred_corners, dtype=np.float64)
-    gt = np.asarray(gt_corners, dtype=np.float64)
-    if pred.shape != (4, 2) or gt.shape != (4, 2):
-        return float("nan")
-    pred = order_corners_perimeter(pred)
-    gt = order_corners_perimeter(gt)
-    height, width = image_shape
-    diagonal = math.hypot(float(height), float(width))
-    if diagonal <= 0.0:
-        return float("nan")
-    min_dist = min(
-        float(np.mean(np.linalg.norm(np.roll(pred, shift, axis=0) - gt, axis=1)))
-        for shift in range(4)
-    )
-    return min_dist / diagonal
-
-
-def run_single_image(
-    image_input: np.ndarray,
-    params: dict,
-    gt_corners: np.ndarray | None = None,
-    gt_ink_mask: np.ndarray | None = None,
-) -> dict:
-    """Run the five core stages on one image and return intermediates plus metrics.
+def polygon_iou(pred_quad: np.ndarray | None, gt_quad: np.ndarray | None) -> float:
+    """Compute IoU between two convex quadrilaterals; returns 0.0 if pred_quad is None.
 
     Args:
-        image_input: grayscale/BGR/BGRA array (H, W) or (H, W, C).
-        params: keys of DEFAULT_PARAMS; missing keys fall back to defaults.
-        gt_corners: optional (4, 2) ground-truth corners in image coordinates.
-        gt_ink_mask: optional binary ink mask aligned with the warped output.
+        pred_quad: Predicted corners (4, 2) or None.
+        gt_quad: Ground-truth corners (4, 2).
     Returns:
-        dict with edge/hough/quad/warp/threshold intermediates, metrics, and runtime_ms.
+        Intersection-over-Union in [0.0, 1.0].
     """
-    cfg = {**DEFAULT_PARAMS, **(params or {})}
-    gray = _to_gray_uint8(image_input)
-    height, width = gray.shape[:2]
+    if pred_quad is None or gt_quad is None:
+        return 0.0
+    p = order_corners_perimeter(pred_quad).astype(np.float64)
+    g = order_corners_perimeter(gt_quad).astype(np.float64)
+    inter_poly = _clip_convex_polygon(p, g)
+    inter_area = polygon_area(inter_poly) if len(inter_poly) >= 3 else 0.0
+    union_area = polygon_area(p) + polygon_area(g) - inter_area
+    if union_area <= 1e-9:
+        return 0.0
+    return float(np.clip(inter_area / union_area, 0.0, 1.0))
 
-    start = time.perf_counter()
-    canny = canny_edge_detector(
-        gray,
-        low_threshold=float(cfg["canny_low"]),
-        high_threshold=float(cfg["canny_high"]),
-        sigma=float(cfg["canny_sigma"]),
-        apply_blur=bool(cfg["apply_blur"]),
+
+def normalized_corner_error(
+    pred_quad: np.ndarray | None, gt_quad: np.ndarray | None, img_shape: tuple[int, ...]
+) -> float | None:
+    """Compute minimum perimeter-ordered corner error normalized by image diagonal.
+
+    Args:
+        pred_quad: Predicted corners (4, 2) or None.
+        gt_quad: Ground-truth corners (4, 2).
+        img_shape: Image shape (H, W, ...).
+    Returns:
+        Mean Euclidean corner error / sqrt(W^2 + H^2), or None if pred_quad/gt_quad is None.
+    """
+    if pred_quad is None or gt_quad is None:
+        return None
+    p = order_corners_perimeter(pred_quad).astype(np.float64)
+    g = order_corners_perimeter(gt_quad).astype(np.float64)
+    h, w = img_shape[:2]
+    diag = float(np.hypot(w, h))
+    if diag <= 1e-9:
+        return None
+    best = float("inf")
+    for seq in (p, p[::-1]):
+        for shift in range(4):
+            rolled = np.roll(seq, shift, axis=0)
+            err = float(np.mean(np.linalg.norm(rolled - g, axis=1)))
+            if err < best:
+                best = err
+    return best / diag
+
+
+def ink_prf1(pred_binary: np.ndarray, gt_mask: np.ndarray) -> tuple[float, float, float]:
+    """Compute precision, recall, and F1 for ink class (pixel < 128).
+
+    Args:
+        pred_binary: Predicted binary image (0=ink, 255=bg), shape (H, W).
+        gt_mask: Ground-truth mask (0=ink, 255=bg), shape (H, W).
+    Returns:
+        Tuple (precision, recall, f1) in [0.0, 1.0].
+    """
+    pred_ink = np.asarray(pred_binary) < 128
+    gt_ink = np.asarray(gt_mask) < 128
+    tp = int(np.sum(pred_ink & gt_ink))
+    fp = int(np.sum(pred_ink & (~gt_ink)))
+    fn = int(np.sum((~pred_ink) & gt_ink))
+    precision = float(tp) / float(tp + fp) if (tp + fp) > 0 else 0.0
+    recall = float(tp) / float(tp + fn) if (tp + fn) > 0 else 0.0
+    f1 = (2.0 * precision * recall / (precision + recall)) if (precision + recall) > 0 else 0.0
+    return precision, recall, f1
+
+
+def resize_for_work(image: np.ndarray, max_dim: int) -> tuple[np.ndarray, float]:
+    """Resize image so max(H, W) <= max_dim, returning (resized, scale_to_orig)."""
+    h, w = image.shape[:2]
+    cur_max = max(h, w)
+    if cur_max <= max_dim:
+        return image, 1.0
+    scale = float(max_dim) / float(cur_max)
+    new_w = max(1, int(round(w * scale)))
+    new_h = max(1, int(round(h * scale)))
+    resized = cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_AREA)
+    return resized, 1.0 / scale
+
+
+def process_single_image(image: np.ndarray, config: dict | None = None) -> dict:
+    """Run full custom document scanner pipeline on an in-memory BGR/gray image.
+
+    Args:
+        image: Loaded image array of shape (H, W, 3) or (H, W).
+        config: Parameter dictionary; defaults to DEFAULT_CONFIG.
+    Returns:
+        Dict with status, reject_reason, corners, runtime_ms, intermediates, warped, otsu, sauvola.
+    """
+    cfg = {**DEFAULT_CONFIG, **(config or {})}
+    t0 = time.perf_counter()
+
+    work_img, scale_to_orig = resize_for_work(image, int(cfg["work_max_dim"]))
+    canny_res = canny_edge_detection(
+        work_img,
+        sigma=float(cfg["sigma"]),
+        low_ratio=float(cfg["low_ratio"]),
+        high_ratio=float(cfg["high_ratio"]),
+        use_gaussian=bool(cfg["use_gaussian"]),
     )
-    hough = detect_hough_lines(
-        canny["edge_map"],
-        threshold=int(cfg["hough_threshold"]),
+    edges = canny_res["edges"]
+    acc, rhos, thetas = hough_transform(
+        edges, rho_res=float(cfg["rho_res"]), theta_res_deg=float(cfg["theta_res_deg"])
+    )
+    max_votes = int(np.max(acc)) if acc.size > 0 else 0
+    vote_thresh = max(int(cfg["hough_min_votes"]), int(round(float(cfg["hough_thresh_ratio"]) * max_votes)))
+    peaks = find_hough_peaks(
+        acc,
+        rhos,
+        thetas,
+        threshold=vote_thresh,
         top_k=int(cfg["top_k_lines"]),
-        suppress_duplicates=bool(cfg["suppress_duplicates"]),
+        suppress=bool(cfg["hough_suppress"]),
+        rho_supp=float(cfg["rho_supp"]),
+        theta_supp_deg=float(cfg["theta_supp_deg"]),
     )
-    quad = find_document_quadrilateral(
-        hough["filtered_lines"],
-        canny["edge_map"],
-        (height, width),
+    quad_res = find_document_quad(
+        peaks,
+        edges,
+        work_img.shape,
         use_edge_support=bool(cfg["use_edge_support"]),
+        min_area_ratio=float(cfg["min_area_ratio"]),
+        max_area_ratio=float(cfg["max_area_ratio"]),
+        min_edge_support=float(cfg["min_edge_support"]),
+        min_side_support=float(cfg.get("min_side_support", 0.35)),
+        min_angle_deg=float(cfg["min_angle_deg"]),
+        max_angle_deg=float(cfg["max_angle_deg"]),
     )
 
-    warped = None
-    homography = None
-    otsu_value = None
-    otsu_binary = None
-    sauvola_map = None
-    sauvola_binary = None
+    warped_bgr = None
+    warped_gray = None
+    otsu_res = None
+    sauvola_res = None
+    orig_corners = None
 
-    if quad["status"] == "accepted":
-        warped, homography = warp_document(gray, quad["corners"])
-        otsu_value, otsu_binary = otsu_threshold(warped)
-        sauvola_map, sauvola_binary = sauvola_threshold(
-            warped,
+    if quad_res["status"] == "accepted" and quad_res["corners"] is not None:
+        orig_corners = (quad_res["corners"] * scale_to_orig).astype(np.float32)
+        warped_bgr, _ = warp_document(
+            image, orig_corners, interpolation="bilinear"
+        )
+        warped_gray = to_grayscale(warped_bgr)
+        otsu_res = otsu_threshold(warped_gray)
+        sauvola_res = sauvola_threshold(
+            warped_gray,
             window_size=int(cfg["sauvola_window"]),
             k=float(cfg["sauvola_k"]),
         )
-    runtime_ms = (time.perf_counter() - start) * 1000.0
 
-    accepted = quad["status"] == "accepted"
-    iou = float("nan")
-    corner_error = float("nan")
-    if gt_corners is not None:
-        if accepted:
-            iou = compute_polygon_iou(quad["corners"], gt_corners)
-            corner_error = compute_corner_error_norm(quad["corners"], gt_corners, (height, width))
-        else:
-            iou = 0.0
-
-    precision = recall = f1 = float("nan")
-    if gt_ink_mask is not None and sauvola_binary is not None:
-        gt_mask = np.asarray(gt_ink_mask)
-        if gt_mask.shape != sauvola_binary.shape:
-            gt_mask = cv2.resize(
-                gt_mask.astype(np.uint8),
-                (sauvola_binary.shape[1], sauvola_binary.shape[0]),
-                interpolation=cv2.INTER_NEAREST,
-            )
-        ink_metrics = compute_binarization_metrics(sauvola_binary == 0, gt_mask > 0)
-        precision = ink_metrics["precision"]
-        recall = ink_metrics["recall"]
-        f1 = ink_metrics["f1"]
-
+    runtime_ms = (time.perf_counter() - t0) * 1000.0
     return {
-        "image_id": None,
-        "status": quad["status"],
-        "reject_reason": quad["reject_reason"],
+        "status": quad_res["status"],
+        "reject_reason": quad_res["reject_reason"],
+        "corners": orig_corners,
+        "work_corners": quad_res["corners"],
+        "scale_to_orig": scale_to_orig,
+        "score": quad_res["score"],
+        "edge_support": quad_res["edge_support"],
+        "area_ratio": quad_res["area_ratio"],
+        "candidates": quad_res["candidates"],
+        "canny": canny_res,
+        "accumulator": acc,
+        "rhos": rhos,
+        "thetas": thetas,
+        "peaks": peaks,
+        "warped_bgr": warped_bgr,
+        "warped_gray": warped_gray,
+        "otsu": otsu_res,
+        "sauvola": sauvola_res,
         "runtime_ms": runtime_ms,
-        "resolution": f"{width}x{height}",
-        "iou": iou,
-        "corner_error_norm": corner_error,
-        "precision": precision,
-        "recall": recall,
-        "f1": f1,
-        "gray": gray,
-        "edge_map": canny["edge_map"],
-        "grad_mag": canny["grad_mag"],
-        "hough": hough,
-        "quad": quad,
-        "corners": quad["corners"],
-        "warped": warped,
-        "homography": homography,
-        "otsu_threshold": otsu_value,
-        "otsu_binary": otsu_binary,
-        "sauvola_map": sauvola_map,
-        "sauvola_binary": sauvola_binary,
     }
 
 
-def _draw_hough_lines(image: np.ndarray, endpoints: list) -> np.ndarray:
-    canvas = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR) if image.ndim == 2 else image.copy()
-    for (x0, y0), (x1, y1) in endpoints:
-        cv2.line(canvas, (int(x0), int(y0)), (int(x1), int(y1)), (0, 0, 255), 2, cv2.LINE_AA)
-    return canvas
+def load_labels(labels_path: str | None) -> dict:
+    """Load corner ground-truth JSON mapping image_id -> 4x2 list if present."""
+    if not labels_path or not os.path.exists(labels_path):
+        return {}
+    with open(labels_path, "r", encoding="utf-8") as f:
+        return json.load(f)
 
 
-def _draw_quadrilateral(image: np.ndarray, corners: np.ndarray) -> np.ndarray:
-    canvas = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR) if image.ndim == 2 else image.copy()
-    points = np.rint(np.asarray(corners, dtype=np.float64)).astype(np.int32)
-    cv2.polylines(canvas, [points], isClosed=True, color=(0, 255, 0), thickness=3, lineType=cv2.LINE_AA)
-    for index, (x, y) in enumerate(points):
-        origin = (int(x) + 6, int(y) - 6)
-        cv2.circle(canvas, (int(x), int(y)), 5, (0, 0, 255), -1, cv2.LINE_AA)
-        cv2.putText(
-            canvas,
-            str(index),
-            origin,
-            cv2.FONT_HERSHEY_SIMPLEX,
-            1.0,
-            (255, 0, 0),
-            2,
-            cv2.LINE_AA,
-        )
-    return canvas
-
-
-def visualize_and_save_intermediates(
-    result: dict,
-    output_dir: str,
-    image_id: str,
-    original_image: np.ndarray,
+def _save_image_intermediates(
+    out_dir: Path, img_id: str, image: np.ndarray, res: dict, gt_corners: np.ndarray | None
 ) -> None:
-    """Write the seven numbered checkpoints for one image into output_dir/image_id/."""
-    image_dir = os.path.join(output_dir, image_id)
-    os.makedirs(image_dir, exist_ok=True)
+    """Save compact intermediate visualizations after runtime measurement."""
+    case_dir = out_dir / img_id
+    case_dir.mkdir(parents=True, exist_ok=True)
+    edges = res["canny"]["edges"]
+    cv2.imwrite(str(case_dir / "01_edges.png"), edges)
 
-    gray = result["gray"]
-    original = _to_gray_uint8(original_image)
-    if original.shape != gray.shape:
-        original = cv2.resize(original, (gray.shape[1], gray.shape[0]), interpolation=cv2.INTER_AREA)
+    # Work-scale overlay of Hough lines + predicted/GT quad
+    h_w, w_w = edges.shape[:2]
+    work_vis = cv2.resize(image, (w_w, h_w), interpolation=cv2.INTER_AREA)
+    for pk in res["peaks"]:
+        rho, theta = float(pk["rho"]), float(pk["theta"])
+        a, b = float(np.cos(theta)), float(np.sin(theta))
+        x0, y0 = a * rho, b * rho
+        pt1 = (int(round(x0 + 2000 * (-b))), int(round(y0 + 2000 * a)))
+        pt2 = (int(round(x0 - 2000 * (-b))), int(round(y0 - 2000 * a)))
+        cv2.line(work_vis, pt1, pt2, (0, 180, 255), 1, cv2.LINE_AA)
+    cv2.imwrite(str(case_dir / "02_hough_lines.png"), work_vis)
 
-    cv2.imwrite(os.path.join(image_dir, "01_gray.png"), gray)
-    cv2.imwrite(os.path.join(image_dir, "02_canny_edge.png"), result["edge_map"])
-    cv2.imwrite(
-        os.path.join(image_dir, "03_hough_lines.png"),
-        _draw_hough_lines(original, result["hough"]["line_endpoints"]),
-    )
+    overlay = image.copy()
+    if gt_corners is not None:
+        cv2.polylines(overlay, [gt_corners.astype(np.int32)], True, (255, 0, 255), 4, cv2.LINE_AA)
+    if res["corners"] is not None:
+        cv2.polylines(overlay, [res["corners"].astype(np.int32)], True, (0, 220, 0), 4, cv2.LINE_AA)
+    overlay_small = cv2.resize(overlay, (w_w, h_w), interpolation=cv2.INTER_AREA)
+    cv2.imwrite(str(case_dir / "03_quad_overlay.png"), overlay_small)
 
-    if result["corners"] is not None:
-        quad_image = _draw_quadrilateral(original, result["corners"])
-    else:
-        quad_image = cv2.cvtColor(original, cv2.COLOR_GRAY2BGR)
-        cv2.putText(
-            quad_image,
-            f"rejected: {result['reject_reason']}",
-            (10, 30),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            1.0,
-            (0, 0, 255),
-            2,
-            cv2.LINE_AA,
-        )
-    cv2.imwrite(os.path.join(image_dir, "04_quadrilateral.png"), quad_image)
-
-    if result["warped"] is not None:
-        cv2.imwrite(os.path.join(image_dir, "05_warped.png"), result["warped"])
-    if result["otsu_binary"] is not None:
-        cv2.imwrite(os.path.join(image_dir, "06_binary_otsu.png"), result["otsu_binary"])
-    if result["sauvola_binary"] is not None:
-        cv2.imwrite(os.path.join(image_dir, "07_binary_sauvola.png"), result["sauvola_binary"])
+    if res["warped_bgr"] is not None:
+        cv2.imwrite(str(case_dir / "04_warped.png"), res["warped_bgr"])
+    if res["otsu"] is not None:
+        otsu_img = res["otsu"]["binary"] if isinstance(res["otsu"], dict) else res["otsu"]
+        cv2.imwrite(str(case_dir / "05_otsu.png"), otsu_img)
+    if res["sauvola"] is not None:
+        sauvola_img = res["sauvola"]["binary"] if isinstance(res["sauvola"], dict) else res["sauvola"]
+        cv2.imwrite(str(case_dir / "06_sauvola.png"), sauvola_img)
 
 
-def _fmt(value) -> str:
-    if value is None:
-        return ""
-    if isinstance(value, float) and math.isnan(value):
-        return ""
-    if isinstance(value, (np.floating, np.integer)):
-        value = value.item()
-    if isinstance(value, float):
-        return f"{value:.6f}"
-    return str(value)
-
-
-def _resolve_image_path(images_dir: str, filename: str, original_path: str | None) -> str | None:
-    candidates = [os.path.join(images_dir, filename)]
-    if original_path:
-        candidates.append(original_path)
-        candidates.append(os.path.join(images_dir, os.path.basename(original_path)))
-        candidates.append(os.path.join("filedata", os.path.basename(original_path)))
-    for candidate in candidates:
-        if os.path.isfile(candidate):
-            return candidate
-    return None
-
-
-def _iter_manifest(manifest_path: str, images_dir: str):
-    with open(manifest_path, newline="", encoding="utf-8") as handle:
-        for row in csv.DictReader(handle):
-            image_id = (row.get("image_id") or "").strip()
-            filename = (row.get("filename") or "").strip()
-            if not image_id or not filename:
-                continue
-            path = _resolve_image_path(images_dir, filename, row.get("original_path"))
-            gt_corners = None
-            if "x0" in row and row["x0"]:
-                try:
-                    gt_corners = np.array([
-                        [float(row["x0"]), float(row["y0"])],
-                        [float(row["x1"]), float(row["y1"])],
-                        [float(row["x2"]), float(row["y2"])],
-                        [float(row["x3"]), float(row["y3"])],
-                    ], dtype=np.float64)
-                except (ValueError, KeyError):
-                    gt_corners = None
-            mask_filename = row.get("mask_filename", "").strip()
-            mask_path = None
-            if mask_filename and path:
-                cand_mask = os.path.join(os.path.dirname(path), mask_filename)
-                if os.path.isfile(cand_mask):
-                    mask_path = cand_mask
-            yield image_id, row.get("split", ""), row.get("condition", ""), row.get("is_positive", ""), path, gt_corners, mask_path
-
-
-def _iter_directory(images_dir: str):
-    for filename in sorted(os.listdir(images_dir)):
-        if not filename.lower().endswith(IMAGE_EXTENSIONS):
-            continue
-        image_id = os.path.splitext(filename)[0]
-        path = os.path.join(images_dir, filename)
-        yield image_id, "", "", "", path, None, None
-
-
-def process_batch(
+def run_batch(
     manifest_path: str,
     images_dir: str,
     output_csv: str,
-    intermediate_dir: str | None = None,
-    ablation_flags: dict | None = None,
-    gt_corners_map: dict | None = None,
+    split_name: str,
+    config: dict,
+    labels_path: str | None = None,
+    seed: int = 42,
+    save_intermediates_dir: str | None = None,
+    intermediate_ids: set[str] | None = None,
 ) -> list[dict]:
-    """Run run_single_image over a manifest CSV (or images_dir), save intermediates and CSV.
+    """Run pipeline over all rows in a manifest CSV and write 12-column results CSV."""
+    np.random.seed(seed)
+    labels = load_labels(labels_path)
+    rows_out: list[dict] = []
 
-    Returns the list of per-image result dictionaries, including rejected cases.
-    """
-    params = {**DEFAULT_PARAMS, **(ablation_flags or {})}
-    entries = (
-        list(_iter_manifest(manifest_path, images_dir))
-        if manifest_path and os.path.isfile(manifest_path)
-        else list(_iter_directory(images_dir))
-    )
+    with open(manifest_path, "r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        manifest_rows = list(reader)
 
-    output_dir = os.path.dirname(os.path.abspath(output_csv))
-    os.makedirs(output_dir, exist_ok=True)
-    if intermediate_dir:
-        os.makedirs(intermediate_dir, exist_ok=True)
+    for row in manifest_rows:
+        img_id = row["image_id"]
+        split = row.get("split", split_name)
+        condition = row.get("condition", "")
+        is_pos = str(row.get("is_positive", "1")) == "1"
+        img_path = os.path.join(images_dir, row["filename"])
+        img = cv2.imread(img_path)
+        if img is None:
+            raise FileNotFoundError(f"Missing image: {img_path}")
 
-    rows: list[dict] = []
-    for image_id, split, condition, is_positive, image_path, row_gt_corners, mask_path in entries:
-        row = {
-            "image_id": image_id,
-            "split": split,
-            "condition": condition,
-            "status": "rejected",
-            "reject_reason": "image_not_found",
-            "iou": float("nan"),
-            "corner_error_norm": float("nan"),
-            "precision": float("nan"),
-            "recall": float("nan"),
-            "f1": float("nan"),
-            "runtime_ms": float("nan"),
-            "resolution": "",
-        }
-        image = cv2.imread(image_path, cv2.IMREAD_COLOR) if image_path else None
-        if image is not None:
-            gt_corners = row_gt_corners
-            if gt_corners is None and gt_corners_map and image_id in gt_corners_map:
-                gt_corners = np.asarray(gt_corners_map[image_id], dtype=np.float64)
-            gt_ink_mask = None
-            if mask_path and os.path.isfile(mask_path):
-                gt_ink_mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
-            result = run_single_image(image, params, gt_corners=gt_corners, gt_ink_mask=gt_ink_mask)
-            result = run_single_image(image, params, gt_corners=gt_corners, gt_ink_mask=gt_ink_mask)
-            row.update(
-                {
-                    "image_id": image_id,
-                    "split": split,
-                    "condition": condition,
-                    "status": result["status"],
-                    "reject_reason": result["reject_reason"] or "",
-                    "iou": result["iou"],
-                    "corner_error_norm": result["corner_error_norm"],
-                    "precision": result["precision"],
-                    "recall": result["recall"],
-                    "f1": result["f1"],
-                    "runtime_ms": result["runtime_ms"],
-                    "resolution": result["resolution"],
-                }
-            )
-            if intermediate_dir:
-                visualize_and_save_intermediates(result, intermediate_dir, image_id, image)
-            result.update(
-                {"image_id": image_id, "split": split, "condition": condition, "csv_row": row}
-            )
-            rows.append(result)
+        h, w = img.shape[:2]
+        res = process_single_image(img, config)
+
+        gt_entry = labels.get(img_id)
+        gt_corners = np.array(gt_entry["corners"], dtype=np.float32) if (gt_entry and "corners" in gt_entry) else None
+
+        if save_intermediates_dir and (intermediate_ids is None or img_id in intermediate_ids):
+            _save_image_intermediates(Path(save_intermediates_dir), img_id, img, res, gt_corners)
+
+        if not is_pos:
+            iou_val = "0.0000" if res["status"] == "accepted" else "N/A"
+            ce_val = "N/A"
+        elif gt_corners is not None:
+            if res["status"] == "accepted":
+                iou_val = f"{polygon_iou(res['corners'], gt_corners):.4f}"
+                ce = normalized_corner_error(res["corners"], gt_corners, img.shape)
+                ce_val = f"{ce:.4f}" if ce is not None else "N/A"
+            else:
+                iou_val = "0.0000"
+                ce_val = "N/A"
         else:
-            rows.append({"image_id": image_id, "csv_row": row, **row})
+            iou_val = "0.0000" if res["status"] == "rejected" else "N/A"
+            ce_val = "N/A"
 
-    with open(output_csv, "w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=CSV_COLUMNS, extrasaction="ignore")
+        rows_out.append(
+            {
+                "image_id": img_id,
+                "split": split,
+                "condition": condition,
+                "status": res["status"],
+                "reject_reason": res["reject_reason"],
+                "iou": iou_val,
+                "corner_error_norm": ce_val,
+                "precision": "N/A",
+                "recall": "N/A",
+                "f1": "N/A",
+                "runtime_ms": f"{res['runtime_ms']:.2f}",
+                "resolution": f"{w}x{h}",
+            }
+        )
+
+    Path(output_csv).parent.mkdir(parents=True, exist_ok=True)
+    with open(output_csv, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=CSV_COLUMNS)
         writer.writeheader()
-        for result in rows:
-            source = result.get("csv_row", result)
-            writer.writerow({column: _fmt(source.get(column)) for column in CSV_COLUMNS})
+        writer.writerows(rows_out)
 
-    return rows
+    return rows_out
 
 
-def build_params(args: argparse.Namespace) -> dict:
-    return {
-        "apply_blur": not args.no_gaussian,
-        "suppress_duplicates": not args.no_hough_suppression,
-        "use_edge_support": not args.no_edge_support,
-        "top_k_lines": args.top_k_lines,
-        "canny_low": args.canny_low,
-        "canny_high": args.canny_high,
-        "canny_sigma": args.canny_sigma,
-        "sauvola_window": args.sauvola_window,
-        "sauvola_k": args.sauvola_k,
-    }
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Run custom Document Scanner pipeline.")
+    parser.add_argument("--manifest", required=True)
+    parser.add_argument("--images-dir", required=True)
+    parser.add_argument("--output-csv", required=True)
+    parser.add_argument("--split", default="development")
+    parser.add_argument("--config", default=None)
+    parser.add_argument("--labels-json", default="data/labels.json")
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--save-intermediates", default=None)
+    parser.add_argument("--no-gaussian", action="store_true")
+    parser.add_argument("--no-hough-suppression", action="store_true")
+    parser.add_argument("--no-edge-support", action="store_true")
+    args = parser.parse_args()
 
+    cfg = dict(DEFAULT_CONFIG)
+    if args.config and os.path.exists(args.config):
+        with open(args.config, "r", encoding="utf-8") as f:
+            cfg.update(json.load(f))
+    if args.no_gaussian:
+        cfg["use_gaussian"] = False
+    if args.no_hough_suppression:
+        cfg["hough_suppress"] = False
+    if args.no_edge_support:
+        cfg["use_edge_support"] = False
 
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Document scanner pipeline (Canny/Hough/quad/warp/threshold)")
-    parser.add_argument("--manifest", default=None, help="manifest CSV (e.g. data/manifest_development.csv)")
-    parser.add_argument("--images-dir", required=True, help="directory containing the images")
-    parser.add_argument("--output-csv", required=True, help="destination results CSV")
-    parser.add_argument("--intermediate-dir", default=None, help="folder for intermediate PNGs")
-    parser.add_argument("--no-gaussian", action="store_true", help="ablation 1: skip Gaussian blur")
-    parser.add_argument("--no-hough-suppression", action="store_true", help="ablation 2: keep duplicate Hough lines")
-    parser.add_argument("--no-edge-support", action="store_true", help="ablation 3: drop edge-support score term")
-    parser.add_argument("--top-k-lines", type=int, default=16)
-    parser.add_argument("--canny-low", type=float, default=40.0)
-    parser.add_argument("--canny-high", type=float, default=120.0)
-    parser.add_argument("--canny-sigma", type=float, default=1.2)
-    parser.add_argument("--sauvola-window", type=int, default=25)
-    parser.add_argument("--sauvola-k", type=float, default=0.2)
-    args = parser.parse_args(argv)
-
-    rows = process_batch(
-        manifest_path=args.manifest,
-        images_dir=args.images_dir,
-        output_csv=args.output_csv,
-        intermediate_dir=args.intermediate_dir,
-        ablation_flags=build_params(args),
+    run_batch(
+        args.manifest,
+        args.images_dir,
+        args.output_csv,
+        args.split,
+        cfg,
+        labels_path=args.labels_json,
+        seed=args.seed,
+        save_intermediates_dir=args.save_intermediates,
     )
-    accepted = sum(1 for row in rows if row.get("status") == "accepted")
-    print(f"processed={len(rows)} accepted={accepted} csv={args.output_csv}")
-    return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()

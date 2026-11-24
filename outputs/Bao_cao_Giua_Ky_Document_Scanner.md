@@ -1,11 +1,16 @@
 <!-- COVER_START -->
-TRƯỜNG ĐẠI HỌC KHOA HỌC TỰ NHIÊN - ĐHQG TP.HCM
+ĐẠI HỌC QUỐC GIA THÀNH PHỐ HỒ CHÍ MINH
+TRƯỜNG ĐẠI HỌC KHOA HỌC TỰ NHIÊN
 KHOA ĐIỆN TỬ - VIỄN THÔNG
-BÁO CÁO ĐỒ ÁN GIỮA KỲ: DOCUMENT SCANNER
-Phát hiện tài liệu, hiệu chỉnh phối cảnh và nhị phân hóa ảnh
-Học phần: Nhập môn Xử lý ảnh và Video
-Môi trường thực thi: Python 3.11.9 | OpenCV 5.0.0 | NumPy 2.3.2 | Seed 42
-Ngày hoàn thành báo cáo: 24/11/2026
+BỘ MÔN MÁY TÍNH - HỆ THỐNG NHÚNG
+BÁO CÁO ĐỒ ÁN GIỮA KỲ
+MÔN HỌC: NHẬP MÔN XỬ LÝ ẢNH VÀ VIDEO
+HỆ THỐNG DOCUMENT SCANNER: PHÁT HIỆN TÀI LIỆU, HIỆU CHỈNH PHỐI CẢNH VÀ NHỊ PHÂN HÓA ẢNH
+Nhóm thực hiện|Nguyễn Vũ Tuấn Khoa - 23200096; Lê Ngọc Long - 23200107; Nguyễn Thanh Tuấn - 23200162
+Lớp chuyên ngành|23MTNhung (Máy tính - Hệ thống nhúng)
+Khoa phụ trách|Khoa Điện tử - Viễn thông
+Môi trường & Seed|Python 3.11.9 | OpenCV 5.0.0 | NumPy 2.3.2 | Seed 42
+TP. HỒ CHÍ MINH - THÁNG 11/2026
 <!-- COVER_END -->
 
 ## CHƯƠNG 1. GIỚI THIỆU ĐỀ TÀI VÀ MỤC TIÊU
@@ -20,6 +25,19 @@ Hệ thống thử nghiệm trên năm điều kiện chụp thực tế và m�
 
 Pipeline chính trong `src/core/` tự cài đặt tường minh bằng Python, NumPy và các primitive cơ bản. Mã nguồn tuyệt đối không gọi `cv2.Canny`, `cv2.HoughLines`, `cv2.threshold` hay `skimage.filters.threshold_*`.
 Thực nghiệm chạy trên bộ xử lý `AMD64 Family 25 Model 117 Stepping 2, AuthenticAMD` với Python `3.11.9`. Các thư viện cài đặt gồm OpenCV `5.0.0`, NumPy `2.3.2`, SciPy `1.16.1` và scikit-image `0.26.0`.
+
+### 1.3. Thông tin nhóm thực hiện và tỷ lệ đóng góp
+
+Nhóm gồm ba thành viên lớp `23MTNhung`, phân chia khối lượng cài đặt, gắn nhãn dữ liệu và kiểm thử cân bằng:
+
+*Bảng 1.1: Danh sách thành viên và tỷ lệ đóng góp thực hiện đồ án.*
+
+| STT | Họ và tên | MSSV | Nhiệm vụ chính | Tỷ lệ |
+| :---: | :--- | :---: | :--- | :---: |
+| 1 | Nguyễn Vũ Tuấn Khoa | 23200096 | Thiết kế kiến trúc, cài đặt Canny/Hough/Quad, thực nghiệm và tổng hợp báo cáo | 34% |
+| 2 | Lê Ngọc Long | 23200107 | Cài đặt Warping/Otsu/Sauvola, sinh tập synthetic và viết 17 unit tests | 33% |
+| 3 | Nguyễn Thanh Tuấn | 23200162 | Phân tách 60 ảnh, gắn nhãn 50 ground-truth góc, chạy baseline và trực quan | 33% |
+| — | **Tổng cộng** | — | — | **100%** |
 
 ## CHƯƠNG 2. KIẾN TRÚC HỆ THỐNG VÀ PHÂN TÍCH TỪNG MODULE
 
@@ -296,12 +314,12 @@ Trên tập Development 36 ảnh, thực nghiệm lần lượt thay đổi $\si
 
 | Tham số | Giá trị thử | Hợp lệ | Mean IoU | Succ@0.8 | CE Norm | Ảnh âm FP | CPU TB (ms) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| `sigma` | `0.8` | 24/30 | 0.5286 | 10/30 | 0.0876 | 2/6 | 200.28 |
-| `sigma` | `1.4` | 23/30 | 0.5223 | 9/30 | 0.0824 | 3/6 | 173.93 |
-| `sigma` | `2.2` | 21/30 | 0.5348 | 9/30 | 0.0603 | 3/6 | 154.84 |
-| `thresholds` | `(0.04,0.12)` | 24/30 | 0.5315 | 8/30 | 0.0861 | 3/6 | 184.24 |
-| `thresholds` | `(0.06,0.16)` | 23/30 | 0.5223 | 9/30 | 0.0824 | 3/6 | 177.13 |
-| `thresholds` | `(0.1,0.25)` | 20/30 | 0.4568 | 7/30 | 0.0854 | 2/6 | 147.90 |
+| `sigma` | `0.8` | 24/30 | 0.5286 | 10/30 | 0.0876 | 2/6 | 225.95 |
+| `sigma` | `1.4` | 23/30 | 0.5223 | 9/30 | 0.0824 | 3/6 | 194.39 |
+| `sigma` | `2.2` | 21/30 | 0.5348 | 9/30 | 0.0603 | 3/6 | 175.04 |
+| `thresholds` | `(0.04,0.12)` | 24/30 | 0.5315 | 8/30 | 0.0861 | 3/6 | 210.81 |
+| `thresholds` | `(0.06,0.16)` | 23/30 | 0.5223 | 9/30 | 0.0824 | 3/6 | 320.44 |
+| `thresholds` | `(0.1,0.25)` | 20/30 | 0.4568 | 7/30 | 0.0854 | 2/6 | 169.63 |
 
 Trên ảnh `dev_01` (`640x480`), khi giảm $\sigma = 0.8$ số điểm biên tăng lên `32,235` (`10.49%`) do nhiễu nền. Khi tăng $\sigma = 2.2$, số điểm biên giảm còn `20,952` (`6.82%`) làm mờ góc giấy.
 Cấu hình $\sigma = 1.4$ và ngưỡng `(0.06, 0.16)` giữ `27,108` điểm biên cân bằng giữa nhiễu và độ liền mạch.
@@ -317,12 +335,12 @@ Thực nghiệm đối chiếu hàm mục tiêu chỉ dùng diện tích (`area_
 
 | Ngưỡng Hough | Chế độ chấm điểm | Hợp lệ | Mean IoU | Succ@0.8 | CE Norm | Ảnh âm FP | CPU TB (ms) |
 | :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| `0.18` | `area_only` | 28/30 | 0.6068 | 11/30 | 0.1006 | 5/6 | 179.14 |
-| `0.18` | `edge_support+area` | 23/30 | 0.5223 | 9/30 | 0.0824 | 3/6 | 169.19 |
-| `0.24` | `area_only` | 27/30 | 0.5965 | 11/30 | 0.0950 | 5/6 | 171.12 |
-| `0.24` | `edge_support+area` | 23/30 | 0.5223 | 9/30 | 0.0824 | 3/6 | 166.77 |
-| `0.30` | `area_only` | 27/30 | 0.5982 | 11/30 | 0.0946 | 5/6 | 168.61 |
-| `0.30` | `edge_support+area` | 23/30 | 0.5223 | 9/30 | 0.0824 | 3/6 | 160.31 |
+| `0.18` | `area_only` | 28/30 | 0.6068 | 11/30 | 0.1006 | 5/6 | 216.50 |
+| `0.18` | `edge_support+area` | 23/30 | 0.5223 | 9/30 | 0.0824 | 3/6 | 241.94 |
+| `0.24` | `area_only` | 27/30 | 0.5965 | 11/30 | 0.0950 | 5/6 | 206.94 |
+| `0.24` | `edge_support+area` | 23/30 | 0.5223 | 9/30 | 0.0824 | 3/6 | 194.23 |
+| `0.30` | `area_only` | 27/30 | 0.5982 | 11/30 | 0.0946 | 5/6 | 191.02 |
+| `0.30` | `edge_support+area` | 23/30 | 0.5223 | 9/30 | 0.0824 | 3/6 | 188.08 |
 
 Chế độ `area_only` chấp nhận khung lớn trên nền nên Mean IoU đạt cao hơn một chút nhưng FPR ảnh âm lên tới 5/6 (`83.3%`). Kết hợp `edge_support+area` ở ngưỡng `0.24` giảm FPR ảnh âm xuống 3/6 (`50.0%`) và cải thiện sai số góc còn `0.0824`.
 
@@ -412,7 +430,7 @@ Trên tập Test đóng băng, pipeline tự cài đạt Mean IoU `0.4668` (hợ
 
 ### 5.2. Nghiên cứu tách biệt thành phần (Ablation Study)
 
-Ba ca Ablation chạy trên Development với cùng giới hạn `top_k_lines = 20` và toàn bộ tham số còn lại cố định. Bỏ Gaussian smoothing làm `Succ@0.8` giảm từ `9/30` xuống `7/30` và thời gian CPU tăng lên `228.2 ms`.
+Ba ca Ablation chạy trên Development với cùng giới hạn `top_k_lines = 20` và toàn bộ tham số còn lại cố định. Bỏ Gaussian smoothing làm `Succ@0.8` giảm từ `9/30` xuống `7/30` và thời gian CPU tăng lên `310.4 ms`.
 Bỏ triệt tiêu đường Hough trùng làm Mean IoU tụt sâu từ `0.5222` xuống `0.3643`. Nguyên nhân là các đường song song sát nhau ở một cạnh mạnh chiếm hết 20 ứng viên đầu tiên.
 Bỏ thành phần edge-support giúp chọn khung lớn hơn (`Mean IoU = 0.5965`) nhưng ảnh âm báo giả vọt lên `5/6` (`83.3%`).
 
@@ -420,11 +438,11 @@ Bỏ thành phần edge-support giúp chọn khung lớn hơn (`Mean IoU = 0.596
 
 | Biến thể cấu hình | Hợp lệ | Mean IoU | Succ@0.8 | CE Norm | Ảnh âm FP | CPU Acc (ms) | CPU Rej (ms) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| Custom (Đầy đủ) | 23/30 | 0.5222 | 9/30 (30.0%) | 0.0825 | 3/6 | 182.1 | 128.0 |
-| Baseline (OpenCV) | 13/30 | 0.3522 | 7/30 (23.3%) | 0.0446 | 1/6 | 122.9 | 29.1 |
-| Ablation 1: Bỏ Gaussian | 23/30 | 0.5132 | 7/30 (23.3%) | 0.0833 | 2/6 | 228.2 | 150.9 |
-| Ablation 2: Bỏ Hough Supp. | 16/30 | 0.3643 | 9/30 (30.0%) | 0.0877 | 3/6 | 177.8 | 121.7 |
-| Ablation 3: Bỏ Edge Support | 27/30 | 0.5965 | 11/30 (36.7%) | 0.0950 | 5/6 | 177.4 | 119.9 |
+| Custom (Đầy đủ) | 23/30 | 0.5222 | 9/30 (30.0%) | 0.0825 | 3/6 | 251.8 | 218.7 |
+| Baseline (OpenCV) | 13/30 | 0.3522 | 7/30 (23.3%) | 0.0446 | 1/6 | 166.7 | 43.8 |
+| Ablation 1: Bỏ Gaussian | 23/30 | 0.5132 | 7/30 (23.3%) | 0.0833 | 2/6 | 310.4 | 198.8 |
+| Ablation 2: Bỏ Hough Supp. | 16/30 | 0.3643 | 9/30 (30.0%) | 0.0877 | 3/6 | 243.6 | 157.5 |
+| Ablation 3: Bỏ Edge Support | 27/30 | 0.5965 | 11/30 (36.7%) | 0.0950 | 5/6 | 240.3 | 156.6 |
 
 ![Biểu đồ Ablation và Baseline](outputs/figures/chart_ablation_and_baseline.png)
 *Hình 6: So sánh tỷ lệ nhận diện ảnh dương, tỷ lệ báo giả ảnh âm và thời gian CPU trên tập Development.*
@@ -481,18 +499,18 @@ Chuỗi ảnh trung gian từ grayscale, Canny, Hough, tứ giác, nắn phẳng
 
 ### 5.5. Phân bổ thời gian CPU theo từng module
 
-Thời gian xử lý được đo thuần từ mảng ảnh trong RAM đến đầu ra, loại trừ đọc ghi đĩa và vẽ hình. Trên 36 ảnh Development (gốc tới `2560x1922`), ca `accepted` mất `185.10 ms` và ca `rejected` mất `123.56 ms`.
-Trên tập Test (24 ảnh), thời gian trung bình là `141.88 ms` cho nhóm `accepted` và `120.17 ms` cho nhóm `rejected`.
+Thời gian xử lý được đo thuần từ mảng ảnh trong RAM đến đầu ra, loại trừ đọc ghi đĩa và vẽ hình. Trên 36 ảnh Development (gốc tới `2560x1922`), ca `accepted` mất `366.43 ms` và ca `rejected` mất `256.89 ms`.
+Trên tập Test (24 ảnh), thời gian trung bình là `219.23 ms` cho nhóm `accepted` và `169.53 ms` cho nhóm `rejected`.
 
 *Bảng 10: Thời gian thực thi trung bình trên CPU theo từng module tại tập Development.*
 
 | Giai đoạn xử lý | Module | Thời gian TB (ms) | Tỷ trọng (%) |
 | :--- | :--- | :---: | :---: |
-| 1. Resize + Canny Edge | `src/core/canny.py` | 45.06 | 25.5% |
-| 2. Hough Transform + NMS | `src/core/hough.py` | 58.39 | 33.0% |
-| 3. Quadrilateral Selection | `src/core/quadrilateral.py` | 41.56 | 23.5% |
-| 4. Homography + Warping | `src/core/warping.py` | 3.63 | 2.1% |
-| 5. Otsu + Sauvola Thresholding | `src/core/thresholding.py` | 28.21 | 16.0% |
+| 1. Resize + Canny Edge | `src/core/canny.py` | 99.54 | 28.4% |
+| 2. Hough Transform + NMS | `src/core/hough.py` | 93.07 | 26.5% |
+| 3. Quadrilateral Selection | `src/core/quadrilateral.py` | 104.97 | 29.9% |
+| 4. Homography + Warping | `src/core/warping.py` | 5.77 | 1.6% |
+| 5. Otsu + Sauvola Thresholding | `src/core/thresholding.py` | 47.43 | 13.5% |
 
 ![Phân bổ thời gian CPU theo từng module](outputs/figures/fig_runtime_breakdown.png)
 *Hình 16: Phân bổ thời gian xử lý CPU thuần trên 5 module lõi (ba bước định vị chiếm 84.6% tổng thời gian).*
@@ -502,7 +520,7 @@ Trên tập Test (24 ảnh), thời gian trung bình là `141.88 ms` cho nhóm `
 ### 6.1. Trường hợp 1: Ảnh chuẩn, nền đơn giản (dev_01)
 
 - *Đầu vào & Điều kiện chụp:* Ảnh chụp trang sách nền đồng nhất, kích thước gốc `2560x1922` (`640x480` khi xử lý), ánh sáng đều.
-- *Điểm gãy trong pipeline:* Trạng thái `accepted` sau `208.15 ms`, đạt `IoU = 0.6922` và `CE = 0.0674`.
+- *Điểm gãy trong pipeline:* Trạng thái `accepted` sau `260.77 ms`, đạt `IoU = 0.6922` và `CE = 0.0674`.
 - *Bằng chứng trên ảnh trung gian:* Edge map sạch (8.82% pixel biên), accumulator đạt đỉnh `254` phiếu, edge support `0.8744`.
 - *Nguyên nhân & Tham số liên quan:* Khung tranh in trên bìa sách có hỗ trợ biên rất cao. Do đó, tứ giác chọn bị co nhẹ vào khung trong.
 
@@ -600,68 +618,68 @@ python scripts/audit_report.py
 
 | Mã ảnh | Điều kiện | Trạng thái | Lý do từ chối | IoU | Corner Err | Runtime (ms) | Độ phân giải |
 | :--- | :--- | :---: | :--- | :---: | :---: | :---: | :---: |
-| dev_01 | nen_don_gian_du_sang | accepted | - | 0.6922 | 0.0674 | 208.15 | 2560x1922 |
-| dev_02 | goc_chup_xien | accepted | - | 0.9876 | 0.0034 | 225.76 | 1922x2560 |
-| dev_03 | nen_chu_nhat_gay_nhieu | accepted | - | 0.8615 | 0.0448 | 222.35 | 2560x1922 |
-| dev_04 | bien_tuong_phan_thap | accepted | - | 0.8967 | 0.0305 | 222.54 | 2560x1922 |
-| dev_05 | anh_sang_khong_deu_bong_do | rejected | out_of_bounds | 0.0000 | N/A | 102.04 | 1922x2560 |
-| dev_06 | nen_don_gian_du_sang | accepted | - | 0.9370 | 0.0152 | 185.79 | 1922x2560 |
-| dev_07 | goc_chup_xien | rejected | low_edge_support | 0.0000 | N/A | 146.55 | 2560x1922 |
-| dev_08 | nen_chu_nhat_gay_nhieu | accepted | - | 0.8149 | 0.0568 | 194.26 | 2560x1922 |
-| dev_09 | bien_tuong_phan_thap | accepted | - | 0.7022 | 0.0934 | 212.67 | 2560x1922 |
-| dev_10 | anh_sang_khong_deu_bong_do | accepted | - | 0.2260 | 0.2130 | 149.14 | 1922x2560 |
-| dev_11 | nen_don_gian_du_sang | accepted | - | 0.2382 | 0.2216 | 203.00 | 2560x1922 |
-| dev_12 | goc_chup_xien | accepted | - | 0.2251 | 0.2245 | 184.69 | 2560x1922 |
-| dev_13 | nen_chu_nhat_gay_nhieu | accepted | - | 0.6996 | 0.0843 | 203.78 | 1922x2560 |
-| dev_14 | bien_tuong_phan_thap | rejected | short_side | 0.0000 | N/A | 163.83 | 2560x1922 |
-| dev_15 | anh_sang_khong_deu_bong_do | rejected | out_of_bounds | 0.0000 | N/A | 127.99 | 1922x2560 |
-| dev_16 | nen_don_gian_du_sang | accepted | - | 0.9830 | 0.0046 | 96.66 | 1536x2048 |
-| dev_17 | goc_chup_xien | rejected | out_of_bounds | 0.0000 | N/A | 73.51 | 2048x1536 |
-| dev_18 | nen_chu_nhat_gay_nhieu | accepted | - | 0.9897 | 0.0032 | 109.73 | 1536x2048 |
-| dev_19 | bien_tuong_phan_thap | accepted | - | 0.6207 | 0.0945 | 182.37 | 1536x2048 |
-| dev_20 | anh_sang_khong_deu_bong_do | accepted | - | 0.8750 | 0.0432 | 153.15 | 1536x2048 |
-| dev_21 | nen_don_gian_du_sang | accepted | - | 0.5601 | 0.1304 | 222.47 | 1536x2048 |
-| dev_22 | goc_chup_xien | accepted | - | 0.6378 | 0.0728 | 200.92 | 1536x2048 |
-| dev_23 | nen_chu_nhat_gay_nhieu | accepted | - | 0.7909 | 0.0495 | 200.97 | 1536x2048 |
-| dev_24 | bien_tuong_phan_thap | accepted | - | 0.6127 | 0.0802 | 218.62 | 1536x2048 |
-| dev_25 | anh_sang_khong_deu_bong_do | accepted | - | 0.6540 | 0.0798 | 176.80 | 2048x1536 |
-| dev_26 | nen_don_gian_du_sang | accepted | - | 0.9828 | 0.0021 | 129.72 | 1536x2048 |
-| dev_27 | goc_chup_xien | rejected | short_side | 0.0000 | N/A | 170.77 | 1536x2048 |
-| dev_28 | nen_chu_nhat_gay_nhieu | accepted | - | 0.2509 | 0.1607 | 193.08 | 1536x2048 |
-| dev_29 | bien_tuong_phan_thap | rejected | short_side | 0.0000 | N/A | 138.19 | 1536x2048 |
-| dev_30 | anh_sang_khong_deu_bong_do | accepted | - | 0.4288 | 0.1206 | 145.14 | 1536x2048 |
-| dev_31 | khong_co_tai_lieu_hop_le | accepted | - | 0.0000 | N/A | 264.53 | 1536x2048 |
-| dev_32 | khong_co_tai_lieu_hop_le | accepted | - | 0.0000 | N/A | 129.58 | 2048x1536 |
-| dev_33 | khong_co_tai_lieu_hop_le | rejected | short_side | N/A | N/A | 130.05 | 960x1280 |
-| dev_34 | khong_co_tai_lieu_hop_le | rejected | short_side | N/A | N/A | 115.66 | 960x1280 |
-| dev_35 | khong_co_tai_lieu_hop_le | rejected | short_side | N/A | N/A | 110.99 | 960x1280 |
-| dev_36 | khong_co_tai_lieu_hop_le | accepted | - | 0.0000 | N/A | 98.02 | 960x1280 |
+| dev_01 | nen_don_gian_du_sang | accepted | - | 0.6922 | 0.0674 | 260.77 | 2560x1922 |
+| dev_02 | goc_chup_xien | accepted | - | 0.9876 | 0.0034 | 265.44 | 1922x2560 |
+| dev_03 | nen_chu_nhat_gay_nhieu | accepted | - | 0.8615 | 0.0448 | 246.97 | 2560x1922 |
+| dev_04 | bien_tuong_phan_thap | accepted | - | 0.8967 | 0.0305 | 255.31 | 2560x1922 |
+| dev_05 | anh_sang_khong_deu_bong_do | rejected | out_of_bounds | 0.0000 | N/A | 178.21 | 1922x2560 |
+| dev_06 | nen_don_gian_du_sang | accepted | - | 0.9370 | 0.0152 | 308.02 | 1922x2560 |
+| dev_07 | goc_chup_xien | rejected | low_edge_support | 0.0000 | N/A | 194.14 | 2560x1922 |
+| dev_08 | nen_chu_nhat_gay_nhieu | accepted | - | 0.8149 | 0.0568 | 267.94 | 2560x1922 |
+| dev_09 | bien_tuong_phan_thap | accepted | - | 0.7022 | 0.0934 | 267.01 | 2560x1922 |
+| dev_10 | anh_sang_khong_deu_bong_do | accepted | - | 0.2260 | 0.2130 | 188.24 | 1922x2560 |
+| dev_11 | nen_don_gian_du_sang | accepted | - | 0.2382 | 0.2216 | 247.43 | 2560x1922 |
+| dev_12 | goc_chup_xien | accepted | - | 0.2251 | 0.2245 | 211.93 | 2560x1922 |
+| dev_13 | nen_chu_nhat_gay_nhieu | accepted | - | 0.6996 | 0.0843 | 277.75 | 1922x2560 |
+| dev_14 | bien_tuong_phan_thap | rejected | short_side | 0.0000 | N/A | 257.24 | 2560x1922 |
+| dev_15 | anh_sang_khong_deu_bong_do | rejected | out_of_bounds | 0.0000 | N/A | 208.41 | 1922x2560 |
+| dev_16 | nen_don_gian_du_sang | accepted | - | 0.9830 | 0.0046 | 143.07 | 1536x2048 |
+| dev_17 | goc_chup_xien | rejected | out_of_bounds | 0.0000 | N/A | 96.97 | 2048x1536 |
+| dev_18 | nen_chu_nhat_gay_nhieu | accepted | - | 0.9897 | 0.0032 | 138.08 | 1536x2048 |
+| dev_19 | bien_tuong_phan_thap | accepted | - | 0.6207 | 0.0945 | 204.17 | 1536x2048 |
+| dev_20 | anh_sang_khong_deu_bong_do | accepted | - | 0.8750 | 0.0432 | 176.25 | 1536x2048 |
+| dev_21 | nen_don_gian_du_sang | accepted | - | 0.5601 | 0.1304 | 242.74 | 1536x2048 |
+| dev_22 | goc_chup_xien | accepted | - | 0.6378 | 0.0728 | 213.01 | 1536x2048 |
+| dev_23 | nen_chu_nhat_gay_nhieu | accepted | - | 0.7909 | 0.0495 | 211.61 | 1536x2048 |
+| dev_24 | bien_tuong_phan_thap | accepted | - | 0.6127 | 0.0802 | 260.12 | 1536x2048 |
+| dev_25 | anh_sang_khong_deu_bong_do | accepted | - | 0.6540 | 0.0798 | 312.44 | 2048x1536 |
+| dev_26 | nen_don_gian_du_sang | accepted | - | 0.9828 | 0.0021 | 275.69 | 1536x2048 |
+| dev_27 | goc_chup_xien | rejected | short_side | 0.0000 | N/A | 357.52 | 1536x2048 |
+| dev_28 | nen_chu_nhat_gay_nhieu | accepted | - | 0.2509 | 0.1607 | 400.77 | 1536x2048 |
+| dev_29 | bien_tuong_phan_thap | rejected | short_side | 0.0000 | N/A | 239.12 | 1536x2048 |
+| dev_30 | anh_sang_khong_deu_bong_do | accepted | - | 0.4288 | 0.1206 | 232.25 | 1536x2048 |
+| dev_31 | khong_co_tai_lieu_hop_le | accepted | - | 0.0000 | N/A | 479.39 | 1536x2048 |
+| dev_32 | khong_co_tai_lieu_hop_le | accepted | - | 0.0000 | N/A | 276.79 | 2048x1536 |
+| dev_33 | khong_co_tai_lieu_hop_le | rejected | short_side | N/A | N/A | 216.23 | 960x1280 |
+| dev_34 | khong_co_tai_lieu_hop_le | rejected | short_side | N/A | N/A | 215.25 | 960x1280 |
+| dev_35 | khong_co_tai_lieu_hop_le | rejected | short_side | N/A | N/A | 223.57 | 960x1280 |
+| dev_36 | khong_co_tai_lieu_hop_le | accepted | - | 0.0000 | N/A | 182.98 | 960x1280 |
 
 *Bảng A.2: Kết quả chi tiết 24 ảnh tập Test trích xuất từ `outputs/results_test.csv`.*
 
 | Mã ảnh | Điều kiện | Trạng thái | Lý do từ chối | IoU | Corner Err | Runtime (ms) | Độ phân giải |
 | :--- | :--- | :---: | :--- | :---: | :---: | :---: | :---: |
-| test_01 | nen_don_gian_du_sang | accepted | - | 0.6628 | 0.0723 | 127.43 | 1536x2048 |
-| test_02 | goc_chup_xien | rejected | out_of_bounds | 0.0000 | N/A | 89.58 | 1536x2048 |
-| test_03 | nen_chu_nhat_gay_nhieu | accepted | - | 0.5765 | 0.0760 | 139.87 | 1536x2048 |
-| test_04 | bien_tuong_phan_thap | accepted | - | 0.8523 | 0.0267 | 141.01 | 1536x2048 |
-| test_05 | anh_sang_khong_deu_bong_do | rejected | no_orthogonal_line_pairs | 0.0000 | N/A | 85.38 | 1536x2048 |
-| test_06 | nen_don_gian_du_sang | accepted | - | 0.2732 | 0.2235 | 166.56 | 1922x2560 |
-| test_07 | goc_chup_xien | accepted | - | 0.3150 | 0.2027 | 138.33 | 960x1280 |
-| test_08 | nen_chu_nhat_gay_nhieu | accepted | - | 0.3178 | 0.1875 | 118.38 | 960x1280 |
-| test_09 | bien_tuong_phan_thap | accepted | - | 0.4224 | 0.1482 | 112.78 | 960x1280 |
-| test_10 | anh_sang_khong_deu_bong_do | accepted | - | 0.8347 | 0.0352 | 128.22 | 960x1280 |
-| test_11 | nen_don_gian_du_sang | accepted | - | 0.6443 | 0.1146 | 123.13 | 960x1280 |
-| test_12 | goc_chup_xien | accepted | - | 0.5241 | 0.1453 | 113.73 | 960x1280 |
-| test_13 | nen_chu_nhat_gay_nhieu | accepted | - | 0.3751 | 0.1449 | 89.36 | 960x1280 |
-| test_14 | bien_tuong_phan_thap | accepted | - | 0.4660 | 0.1264 | 93.84 | 960x1280 |
-| test_15 | anh_sang_khong_deu_bong_do | accepted | - | 0.9208 | 0.0227 | 155.95 | 960x1280 |
-| test_16 | nen_don_gian_du_sang | accepted | - | 0.6437 | 0.0842 | 180.37 | 2560x1922 |
-| test_17 | goc_chup_xien | rejected | out_of_bounds | 0.0000 | N/A | 125.38 | 1922x2560 |
-| test_18 | nen_chu_nhat_gay_nhieu | accepted | - | 0.3444 | 0.1503 | 173.85 | 1922x2560 |
-| test_19 | anh_sang_khong_deu_bong_do | accepted | - | 0.6214 | 0.1150 | 212.94 | 1922x2560 |
-| test_20 | anh_sang_khong_deu_bong_do | accepted | - | 0.5418 | 0.1023 | 85.27 | 960x1280 |
-| test_21 | khong_co_tai_lieu_hop_le | rejected | short_side | N/A | N/A | 154.74 | 1536x2048 |
-| test_22 | khong_co_tai_lieu_hop_le | accepted | - | 0.0000 | N/A | 252.80 | 1536x2048 |
-| test_23 | khong_co_tai_lieu_hop_le | rejected | short_side | N/A | N/A | 113.38 | 960x1280 |
-| test_24 | khong_co_tai_lieu_hop_le | rejected | short_side | N/A | N/A | 152.57 | 960x1280 |
+| test_01 | nen_don_gian_du_sang | accepted | - | 0.6628 | 0.0723 | 242.95 | 1536x2048 |
+| test_02 | goc_chup_xien | rejected | out_of_bounds | 0.0000 | N/A | 171.23 | 1536x2048 |
+| test_03 | nen_chu_nhat_gay_nhieu | accepted | - | 0.5765 | 0.0760 | 242.40 | 1536x2048 |
+| test_04 | bien_tuong_phan_thap | accepted | - | 0.8523 | 0.0267 | 268.25 | 1536x2048 |
+| test_05 | anh_sang_khong_deu_bong_do | rejected | no_orthogonal_line_pairs | 0.0000 | N/A | 127.82 | 1536x2048 |
+| test_06 | nen_don_gian_du_sang | accepted | - | 0.2732 | 0.2235 | 303.73 | 1922x2560 |
+| test_07 | goc_chup_xien | accepted | - | 0.3150 | 0.2027 | 263.19 | 960x1280 |
+| test_08 | nen_chu_nhat_gay_nhieu | accepted | - | 0.3178 | 0.1875 | 246.43 | 960x1280 |
+| test_09 | bien_tuong_phan_thap | accepted | - | 0.4224 | 0.1482 | 141.55 | 960x1280 |
+| test_10 | anh_sang_khong_deu_bong_do | accepted | - | 0.8347 | 0.0352 | 155.66 | 960x1280 |
+| test_11 | nen_don_gian_du_sang | accepted | - | 0.6443 | 0.1146 | 135.30 | 960x1280 |
+| test_12 | goc_chup_xien | accepted | - | 0.5241 | 0.1453 | 134.27 | 960x1280 |
+| test_13 | nen_chu_nhat_gay_nhieu | accepted | - | 0.3751 | 0.1449 | 158.36 | 960x1280 |
+| test_14 | bien_tuong_phan_thap | accepted | - | 0.4660 | 0.1264 | 192.82 | 960x1280 |
+| test_15 | anh_sang_khong_deu_bong_do | accepted | - | 0.9208 | 0.0227 | 205.63 | 960x1280 |
+| test_16 | nen_don_gian_du_sang | accepted | - | 0.6437 | 0.0842 | 241.19 | 2560x1922 |
+| test_17 | goc_chup_xien | rejected | out_of_bounds | 0.0000 | N/A | 155.99 | 1922x2560 |
+| test_18 | nen_chu_nhat_gay_nhieu | accepted | - | 0.3444 | 0.1503 | 250.56 | 1922x2560 |
+| test_19 | anh_sang_khong_deu_bong_do | accepted | - | 0.6214 | 0.1150 | 277.00 | 1922x2560 |
+| test_20 | anh_sang_khong_deu_bong_do | accepted | - | 0.5418 | 0.1023 | 112.24 | 960x1280 |
+| test_21 | khong_co_tai_lieu_hop_le | rejected | short_side | N/A | N/A | 226.68 | 1536x2048 |
+| test_22 | khong_co_tai_lieu_hop_le | accepted | - | 0.0000 | N/A | 374.58 | 1536x2048 |
+| test_23 | khong_co_tai_lieu_hop_le | rejected | short_side | N/A | N/A | 136.47 | 960x1280 |
+| test_24 | khong_co_tai_lieu_hop_le | rejected | short_side | N/A | N/A | 198.98 | 960x1280 |

@@ -170,21 +170,21 @@
   },
   "runtime_profile": {
     "stage_mean_ms": {
-      "canny": 45.06,
-      "hough": 58.39,
-      "quad": 41.56,
-      "warping": 3.63,
-      "thresholding": 28.21
+      "canny": 99.54,
+      "hough": 93.07,
+      "quad": 104.97,
+      "warping": 5.77,
+      "thresholding": 47.43
     },
     "stage_share_pct": {
-      "canny": 25.5,
-      "hough": 33.0,
-      "quad": 23.5,
-      "warping": 2.1,
-      "thresholding": 16.0
+      "canny": 28.4,
+      "hough": 26.5,
+      "quad": 29.9,
+      "warping": 1.6,
+      "thresholding": 13.5
     },
-    "accepted_mean_total_ms": 185.1,
-    "rejected_mean_total_ms": 123.56,
+    "accepted_mean_total_ms": 366.43,
+    "rejected_mean_total_ms": 256.89,
     "num_accepted": 26,
     "num_rejected": 10
   }

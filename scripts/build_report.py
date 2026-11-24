@@ -203,13 +203,18 @@ def build_markdown_report() -> tuple[str, dict]:
     lines = []
     # Cover metadata block (parsed specially by DOCX compiler)
     lines.append("<!-- COVER_START -->")
-    lines.append("TRƯỜNG ĐẠI HỌC KHOA HỌC TỰ NHIÊN - ĐHQG TP.HCM")
+    lines.append("ĐẠI HỌC QUỐC GIA THÀNH PHỐ HỒ CHÍ MINH")
+    lines.append("TRƯỜNG ĐẠI HỌC KHOA HỌC TỰ NHIÊN")
     lines.append("KHOA ĐIỆN TỬ - VIỄN THÔNG")
-    lines.append("BÁO CÁO ĐỒ ÁN GIỮA KỲ: DOCUMENT SCANNER")
-    lines.append("Phát hiện tài liệu, hiệu chỉnh phối cảnh và nhị phân hóa ảnh")
-    lines.append("Học phần: Nhập môn Xử lý ảnh và Video")
-    lines.append(f"Môi trường thực thi: Python {platform.python_version()} | OpenCV {cv2.__version__} | NumPy {np.__version__} | Seed 42")
-    lines.append("Ngày hoàn thành báo cáo: 24/11/2026")
+    lines.append("BỘ MÔN MÁY TÍNH - HỆ THỐNG NHÚNG")
+    lines.append("BÁO CÁO ĐỒ ÁN GIỮA KỲ")
+    lines.append("MÔN HỌC: NHẬP MÔN XỬ LÝ ẢNH VÀ VIDEO")
+    lines.append("HỆ THỐNG DOCUMENT SCANNER: PHÁT HIỆN TÀI LIỆU, HIỆU CHỈNH PHỐI CẢNH VÀ NHỊ PHÂN HÓA ẢNH")
+    lines.append("Nhóm thực hiện|Nguyễn Vũ Tuấn Khoa - 23200096; Lê Ngọc Long - 23200107; Nguyễn Thanh Tuấn - 23200162")
+    lines.append("Lớp chuyên ngành|23MTNhung (Máy tính - Hệ thống nhúng)")
+    lines.append("Khoa phụ trách|Khoa Điện tử - Viễn thông")
+    lines.append(f"Môi trường & Seed|Python {platform.python_version()} | OpenCV {cv2.__version__} | NumPy {np.__version__} | Seed 42")
+    lines.append("TP. HỒ CHÍ MINH - THÁNG 11/2026")
     lines.append("<!-- COVER_END -->")
     lines.append("")
 
@@ -241,6 +246,19 @@ def build_markdown_report() -> tuple[str, dict]:
         f"Thực nghiệm chạy trên bộ xử lý `{platform.processor() or 'CPU x86_64'}` với Python `{platform.python_version()}`. "
         f"Các thư viện cài đặt gồm OpenCV `{cv2.__version__}`, NumPy `{np.__version__}`, SciPy `{scipy.__version__}` và scikit-image `{skimage.__version__}`."
     )
+    lines.append("")
+    lines.append("### 1.3. Thông tin nhóm thực hiện và tỷ lệ đóng góp")
+    lines.append("")
+    lines.append("Nhóm gồm ba thành viên lớp `23MTNhung`, phân chia khối lượng cài đặt, gắn nhãn dữ liệu và kiểm thử cân bằng:")
+    lines.append("")
+    lines.append("*Bảng 1.1: Danh sách thành viên và tỷ lệ đóng góp thực hiện đồ án.*")
+    lines.append("")
+    lines.append("| STT | Họ và tên | MSSV | Nhiệm vụ chính | Tỷ lệ |")
+    lines.append("| :---: | :--- | :---: | :--- | :---: |")
+    lines.append("| 1 | Nguyễn Vũ Tuấn Khoa | 23200096 | Thiết kế kiến trúc, cài đặt Canny/Hough/Quad, thực nghiệm và tổng hợp báo cáo | 34% |")
+    lines.append("| 2 | Lê Ngọc Long | 23200107 | Cài đặt Warping/Otsu/Sauvola, sinh tập synthetic và viết 17 unit tests | 33% |")
+    lines.append("| 3 | Nguyễn Thanh Tuấn | 23200162 | Phân tách 60 ảnh, gắn nhãn 50 ground-truth góc, chạy baseline và trực quan | 33% |")
+    lines.append("| — | **Tổng cộng** | — | — | **100%** |")
     lines.append("")
 
     # Chapter 2
@@ -1268,30 +1286,89 @@ def _configure_header_footer(section) -> None:
 
 
 def _render_cover_page(doc: Document, cover_lines: list[str]) -> None:
-    for idx, txt in enumerate(cover_lines):
-        p = doc.add_paragraph()
-        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p.paragraph_format.line_spacing = 1.3
-        if idx in (0, 1):
-            p.paragraph_format.space_before = Pt(6 if idx == 0 else 0)
-            p.paragraph_format.space_after = Pt(4)
-            r = p.add_run(txt)
-            _set_run_font(r, "Times New Roman", 13.0, bold=True)
-        elif idx == 2:
-            p.paragraph_format.space_before = Pt(72)
-            p.paragraph_format.space_after = Pt(10)
-            r = p.add_run(txt)
-            _set_run_font(r, "Times New Roman", 18.0, bold=True)
-        elif idx == 3:
-            p.paragraph_format.space_before = Pt(0)
-            p.paragraph_format.space_after = Pt(36)
-            r = p.add_run(txt)
-            _set_run_font(r, "Times New Roman", 14.0, italic=True)
-        else:
-            p.paragraph_format.space_before = Pt(4)
-            p.paragraph_format.space_after = Pt(6)
-            r = p.add_run(txt)
-            _set_run_font(r, "Times New Roman", 12.0, bold=(idx == 4))
+    navy = (0, 32, 96)
+    dark_blue = (31, 78, 121)
+    black = (38, 38, 38)
+    gray = (89, 89, 89)
+
+    univ_lines = [ln for ln in cover_lines[:4]]
+    report_type = cover_lines[4] if len(cover_lines) > 4 else "BÁO CÁO ĐỒ ÁN GIỮA KỲ"
+    course_line = cover_lines[5] if len(cover_lines) > 5 else "MÔN HỌC: NHẬP MÔN XỬ LÝ ẢNH VÀ VIDEO"
+    topic_line = cover_lines[6] if len(cover_lines) > 6 else "HỆ THỐNG DOCUMENT SCANNER"
+    info_rows = [ln.split("|", 1) for ln in cover_lines[7:-1] if "|" in ln]
+    loc_line = cover_lines[-1] if len(cover_lines) > 7 else "TP. HỒ CHÍ MINH - THÁNG 11/2026"
+
+    p_univ = doc.add_paragraph()
+    p_univ.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_univ.paragraph_format.space_before = Pt(10)
+    p_univ.paragraph_format.space_after = Pt(2)
+    p_univ.paragraph_format.line_spacing = 1.25
+    r_univ = p_univ.add_run("\n".join(univ_lines))
+    _set_run_font(r_univ, "Times New Roman", 11.5, bold=True, color_rgb=navy)
+
+    p_div = doc.add_paragraph()
+    p_div.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_div.paragraph_format.space_after = Pt(42)
+    r_div = p_div.add_run("-------------------- * --------------------")
+    _set_run_font(r_div, "Times New Roman", 11.0, bold=True, color_rgb=gray)
+
+    p_rep = doc.add_paragraph()
+    p_rep.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_rep.paragraph_format.space_after = Pt(12)
+    r_rep = p_rep.add_run(report_type)
+    _set_run_font(r_rep, "Times New Roman", 18.0, bold=True, color_rgb=dark_blue)
+
+    p_course = doc.add_paragraph()
+    p_course.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_course.paragraph_format.space_after = Pt(20)
+    r_course = p_course.add_run(course_line)
+    _set_run_font(r_course, "Times New Roman", 13.5, bold=True, color_rgb=black)
+
+    p_topic = doc.add_paragraph()
+    p_topic.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_topic.paragraph_format.space_after = Pt(40)
+    p_topic.paragraph_format.line_spacing = 1.25
+    formatted_topic = topic_line.replace(": ", ":\n")
+    r_topic = p_topic.add_run(formatted_topic)
+    _set_run_font(r_topic, "Times New Roman", 15.0, bold=True, color_rgb=navy)
+
+    if info_rows:
+        tbl_info = doc.add_table(rows=len(info_rows), cols=2)
+        tbl_info.alignment = WD_TABLE_ALIGNMENT.CENTER
+        tbl_info.autofit = False
+        for r_idx, (k, v) in enumerate(info_rows):
+            row = tbl_info.rows[r_idx]
+            row.cells[0].width = Cm(5.0)
+            row.cells[1].width = Cm(10.6)
+            p0 = row.cells[0].paragraphs[0]
+            p0.paragraph_format.space_before = Pt(4)
+            p0.paragraph_format.space_after = Pt(4)
+            r0 = p0.add_run(k.strip() + ":")
+            _set_run_font(r0, "Times New Roman", 11.5, bold=True, color_rgb=black)
+
+            p1 = row.cells[1].paragraphs[0]
+            p1.paragraph_format.space_before = Pt(4)
+            p1.paragraph_format.space_after = Pt(4)
+            p1.paragraph_format.line_spacing = 1.25
+            r1 = p1.add_run(v.replace("; ", "\n").strip())
+            _set_run_font(r1, "Times New Roman", 11.5, bold=False, color_rgb=black)
+
+            for cell in row.cells:
+                tcPr = cell._tc.get_or_add_tcPr()
+                tcBorders = parse_xml(
+                    f'<w:tcBorders {nsdecls("w")}>'
+                    f'<w:top w:val="none"/><w:left w:val="none"/>'
+                    f'<w:bottom w:val="none"/><w:right w:val="none"/>'
+                    f'</w:tcBorders>'
+                )
+                _insert_ooxml_ordered(tcPr, tcBorders, TCPR_ORDER)
+
+    p_loc = doc.add_paragraph()
+    p_loc.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_loc.paragraph_format.space_before = Pt(72)
+    r_loc = p_loc.add_run(loc_line)
+    _set_run_font(r_loc, "Times New Roman", 11.5, bold=True, color_rgb=gray)
+
     doc.add_page_break()
 
 

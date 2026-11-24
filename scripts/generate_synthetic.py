@@ -1,232 +1,199 @@
-"""Generate 12 synthetic document images with ground-truth corners and ink masks.
-6 images for Development split, 6 images for Test split.
-"""
 import csv
-import math
 import os
+from pathlib import Path
 import cv2
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
-SYNTHETIC_DIR = "data/synthetic"
-os.makedirs(SYNTHETIC_DIR, exist_ok=True)
 
-CONDITIONS = [
-    ("nen_don_gian_du_sang", "Flat lighting, clean desk background"),
-    ("goc_chup_xien", "Steep 3D perspective viewpoint"),
-    ("nen_chu_nhat_gay_nhieu", "Rectangular books/mousepad around document"),
-    ("bien_tuong_phan_thap", "Document boundary blends into table color"),
-    ("anh_sang_khong_deu_bong_do", "Harsh diagonal shadow cast across text"),
-    ("bien_dang_phuc_tap_nhiễu", "Blur and salt-and-pepper noise degradation"),
-]
-
-SAMPLE_TEXTS = [
-    [
-        "TRUONG DAI HOC KHOA HOC TU NHIEN",
-        "KHOA DIEN TU - VIEN THONG",
-        "NHAP MON XU LY ANH VA VIDEO",
-        "DO AN GIUA KY: DOCUMENT SCANNER",
-        "",
-        "Muc tieu: Xay dung chuong trinh tu dong bien anh chup",
-        "tai lieu thanh anh trang giay nhin thang va nhi phan hoa.",
-        "Cac module bat buoc gom co: Canny edge detector,",
-        "Hough transform line detector, quadrilateral selection,",
-        "perspective transformation va binarization Otsu Sauvola.",
-        "Toan bo pipeline phai duoc cai dat truc tiep bang NumPy.",
-        "Kiem tra danh gia tren tap Development va Test.",
-    ],
-    [
-        "ALGORITHM SPECIFICATION & COMPLEXITY",
-        "Module 1: Canny Edge Detection",
-        "Gradient computation using 3x3 Sobel kernels.",
-        "Non-Maximum Suppression (NMS) thins edges to single-pixel ridges.",
-        "Double thresholding classifies pixels into strong, weak, non-edge.",
-        "8-connected hysteresis tracks weak edges connected to strong ones.",
-        "",
-        "Module 2: Standard Hough Line Transform",
-        "Accumulator parameterization: rho = x*cos(theta) + y*sin(theta).",
-        "Local maximum peak search with vote thresholding.",
-        "Suppression of duplicate nearby lines in rho and theta space.",
-    ],
-    [
-        "BINARIZATION AND EVALUATION METRICS",
-        "Otsu threshold maximizes inter-class variance between foreground",
-        "and background pixels from the 256-level intensity histogram.",
-        "",
-        "Sauvola adaptive thresholding handles complex illumination gradients:",
-        "T(x,y) = m(x,y) * [ 1 + k * ( s(x,y) / R - 1 ) ]",
-        "where m is the local mean and s is the local standard deviation.",
-        "Ink layer precision, recall, and F1 scores are computed",
-        "against pixel-level ground truth binary masks.",
-    ],
-]
+def _load_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
+    candidates = (
+        ["C:/Windows/Fonts/arialbd.ttf", "C:/Windows/Fonts/timesbd.ttf"]
+        if bold
+        else ["C:/Windows/Fonts/arial.ttf", "C:/Windows/Fonts/times.ttf"]
+    )
+    for path in candidates:
+        if os.path.exists(path):
+            return ImageFont.truetype(path, size=size)
+    return ImageFont.load_default()
 
 
-def render_document_page(text_lines, width=400, height=560, bg_val=245):
-    """Render a text document page and return (image, ink_mask)."""
-    img = np.full((height, width), bg_val, dtype=np.uint8)
-    mask = np.zeros((height, width), dtype=np.uint8)
-    
-    # Use OpenCV putText for reproducible cross-platform font rendering
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    y_start = 45
-    line_height = 28
-    
-    for i, line in enumerate(text_lines):
-        y = y_start + i * line_height
-        if y >= height - 20:
-            break
-        if not line:
-            continue
-        scale = 0.52 if i < 4 else 0.45
-        thick = 2 if i < 4 else 1
-        cv2.putText(img, line, (25, y), font, scale, 25, thick, cv2.LINE_AA)
-        cv2.putText(mask, line, (25, y), font, scale, 255, thick, cv2.LINE_AA)
-        
-    return img, mask
+def _render_layout(layout_id: int, width: int = 480, height: int = 360) -> np.ndarray:
+    """Render clean binary mask (0=ink, 255=background) for one of 4 document layouts."""
+    canvas = Image.new("L", (width, height), color=255)
+    draw = ImageDraw.Draw(canvas)
+    f_title = _load_font(20, bold=True)
+    f_body = _load_font(14, bold=False)
+    f_small = _load_font(11, bold=False)
 
-
-def create_synthetic_scene(doc_img, doc_mask, condition_name, index, canvas_w=800, canvas_h=600):
-    """Warp document onto canvas with condition-specific background and lighting."""
-    H_d, W_d = doc_img.shape[:2]
-    src_pts = np.array([[0, 0], [W_d - 1, 0], [W_d - 1, H_d - 1], [0, H_d - 1]], dtype=np.float32)
-    
-    # Background texture
-    np.random.seed(1000 + index)
-    if condition_name == "bien_tuong_phan_thap":
-        # Table color very close to paper color (220 vs 240)
-        canvas = np.full((canvas_h, canvas_w), 215, dtype=np.uint8)
-        noise = np.random.normal(0, 4, canvas.shape).astype(np.int16)
-        canvas = np.clip(canvas.astype(np.int16) + noise, 0, 255).astype(np.uint8)
-    elif condition_name == "nen_chu_nhat_gay_nhieu":
-        # Wood desk + rectangular distracting books/mousepad
-        canvas = np.full((canvas_h, canvas_w), 110, dtype=np.uint8)
-        # Draw rectangular distractors
-        cv2.rectangle(canvas, (40, 50), (280, 240), 60, -1)   # Dark book
-        cv2.rectangle(canvas, (550, 80), (760, 480), 160, -1) # Light notebook
-        cv2.rectangle(canvas, (100, 420), (340, 560), 85, -1) # Mousepad
+    if layout_id == 1:
+        draw.text((24, 20), "BAO CAO XU LY ANH SO - TAI LIEU 01", fill=0, font=f_title)
+        draw.line([(24, 48), (456, 48)], fill=0, width=2)
+        lines = [
+            "1. Muc tieu: Tach nen van ban va phan doan net chu ro rang.",
+            "2. Phuong phap Canny su dung Gaussian blur giam nhieu nhieu hat.",
+            "3. Bien doi Hough anh xa diem bien sang khong gian (rho, theta).",
+            "4. Phep bien doi phoi canh Homography dua trang giay ve mat phang.",
+            "5. Nguong thich nghi Sauvola giup bao toan net chu vung bong do.",
+            "6. Ket qua do luong bang Precision, Recall va chi so F1 lop ink.",
+            "7. Moi tham so duoc khoa tren tap Development truoc khi danh gia.",
+        ]
+        y = 66
+        for line in lines:
+            draw.text((24, y), line, fill=0, font=f_body)
+            y += 34
+    elif layout_id == 2:
+        draw.text((24, 18), "BANG TONG HOP SO LIEU THUC NGHIEM", fill=0, font=f_title)
+        draw.rectangle([24, 54, 456, 326], outline=0, width=2)
+        draw.line([(230, 54), (230, 326)], fill=0, width=2)
+        rows = [
+            ("Chi tieu danh gia", "Gia tri do duoc"),
+            ("Polygon IoU >= 0.8", "83.33 % (25/30)"),
+            ("Corner Error Norm", "0.0184 (px/diag)"),
+            ("Otsu F1 (Nen deu)", "0.9712"),
+            ("Sauvola F1 (Bong do)", "0.9145"),
+            ("Thoi gian CPU TB", "142.50 ms"),
+            ("Trang thai kiem dinh", "Dat chuan AST"),
+        ]
+        y = 64
+        for idx, (c1, c2) in enumerate(rows):
+            font = _load_font(14, bold=(idx == 0))
+            draw.text((34, y), c1, fill=0, font=font)
+            draw.text((242, y), c2, fill=0, font=font)
+            if idx < len(rows) - 1:
+                draw.line([(24, y + 28), (456, y + 28)], fill=0, width=1)
+            y += 38
+    elif layout_id == 3:
+        draw.text((24, 18), "QUY TRINH KIEM CHUNG HE THONG", fill=0, font=f_title)
+        bullets = [
+            "- Kiem tra AST loai bo ham cam trong thu muc src/core.",
+            "- Kiem tra ca bien: anh hang, step edge, duong thang 0/90 do.",
+            "- Chay dong loat tren 36 anh Development va 24 anh Test.",
+            "- Ghi nhan ca cac truong hop tu choi (rejected) vao tep CSV.",
+            "- Xuat anh trung gian: edge map, accumulator, tu giac ung vien.",
+        ]
+        y = 60
+        for b in bullets:
+            draw.text((28, y), b, fill=0, font=f_body)
+            y += 36
+        draw.line([(24, 255), (456, 255)], fill=0, width=1)
+        draw.text(
+            (24, 270),
+            "Ghi chu: Moi phep thu nghiem su dung seed=42 de dam bao tinh tai lap.",
+            fill=0,
+            font=f_small,
+        )
+        draw.text(
+            (24, 294),
+            "Tai lieu tham khao: Gonzalez & Woods, Digital Image Processing, 4th ed.",
+            fill=0,
+            font=f_small,
+        )
     else:
-        # Standard wooden desk tone (~120 with wood-grain pattern)
-        canvas = np.full((canvas_h, canvas_w), 125, dtype=np.uint8)
-        # Add subtle wood grain
-        grain = np.linspace(-15, 15, canvas_w, dtype=np.int16)
-        canvas = np.clip(canvas.astype(np.int16) + grain[None, :], 0, 255).astype(np.uint8)
-    
-    # Define destination quad corners [TL, TR, BR, BL]
-    if condition_name == "goc_chup_xien":
-        # Steep 3D perspective
-        dst_pts = np.array([
-            [260.0, 90.0],   # TL
-            [610.0, 130.0],  # TR
-            [550.0, 540.0],  # BR
-            [130.0, 490.0],  # BL
-        ], dtype=np.float32)
-    elif condition_name == "nen_chu_nhat_gay_nhieu":
-        # Centered among distractors
-        dst_pts = np.array([
-            [210.0, 110.0],
-            [570.0, 95.0],
-            [590.0, 520.0],
-            [225.0, 535.0],
-        ], dtype=np.float32)
+        draw.text((24, 18), "PHIEU GHI NHAN THONG TIN MAU", fill=0, font=f_title)
+        fields = [
+            ("Ma ho so:", "DOC-2026-004"),
+            ("Ngay kiem tra:", "24/11/2026"),
+            ("Do phan giai:", "2560 x 1922 px"),
+            ("Kich thuoc cua so:", "w = 25, k = 0.20"),
+            ("He so R:", "128.0 (8-bit gray)"),
+        ]
+        y = 62
+        for label, val in fields:
+            draw.text((28, y), label, fill=0, font=_load_font(14, bold=True))
+            draw.rectangle([185, y - 4, 452, y + 24], outline=0, width=1)
+            draw.text((195, y), val, fill=0, font=f_body)
+            y += 46
+        draw.text((28, 305), "Xac nhan ket qua: HOP LE [X]   TU CHOI [ ]", fill=0, font=f_body)
+
+    arr = np.array(canvas, dtype=np.uint8)
+    return np.where(arr < 128, np.uint8(0), np.uint8(255))
+
+
+def _apply_lighting(mask: np.ndarray, condition: str, rng: np.random.Generator) -> np.ndarray:
+    """Apply uniform, gradient, or shadow+noise illumination to binary ink mask."""
+    h, w = mask.shape
+    ink_mask = mask < 128
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float64)
+
+    if condition == "nen_deu":
+        bg = np.full((h, w), 232.0, dtype=np.float64)
+        ink_val = 32.0
+        noise_std = 2.0
+    elif condition == "gradient_sang":
+        # Diagonal illumination drop from 245 (top-left) down to 105 (bottom-right)
+        norm_diag = (0.65 * xx / max(1, w - 1)) + (0.35 * yy / max(1, h - 1))
+        bg = 245.0 - 140.0 * norm_diag
+        ink_val = 38.0 - 15.0 * norm_diag
+        noise_std = 3.0
+    elif condition == "bong_kem_nhieu":
+        bg = np.full((h, w), 228.0, dtype=np.float64)
+        # Smooth cast shadow covering a curved region of the page
+        dist = ((xx - 0.58 * w) / (0.42 * w)) ** 2 + ((yy - 0.55 * h) / (0.48 * h)) ** 2
+        shadow = 1.0 / (1.0 + np.exp(-6.0 * (1.0 - dist)))
+        bg = bg - 115.0 * shadow
+        ink_val = 36.0 - 18.0 * shadow
+        noise_std = 10.0
     else:
-        # Mild realistic perspective
-        dst_pts = np.array([
-            [180.0 + index * 4, 80.0 + index * 3],
-            [620.0 - index * 3, 100.0 + index * 5],
-            [590.0 - index * 5, 530.0 - index * 2],
-            [160.0 + index * 2, 510.0 - index * 4],
-        ], dtype=np.float32)
-        
-    H_mat = cv2.getPerspectiveTransform(src_pts, dst_pts)
-    
-    # Warp document and mask onto scene
-    warped_doc = cv2.warpPerspective(doc_img, H_mat, (canvas_w, canvas_h), borderValue=0)
-    doc_roi_mask = cv2.warpPerspective(np.full((H_d, W_d), 255, dtype=np.uint8), H_mat, (canvas_w, canvas_h), borderValue=0)
-    
-    # Composite onto canvas
-    canvas_out = np.where(doc_roi_mask > 128, warped_doc, canvas)
-    
-    # Apply conditions
-    if condition_name == "anh_sang_khong_deu_bong_do":
-        # Diagonal shadow ramp: drops light by up to 130 levels across the middle
-        y_idx, x_idx = np.indices((canvas_h, canvas_w))
-        diag_dist = (x_idx + y_idx * 1.2) / (canvas_w + canvas_h * 1.2)
-        shadow = np.clip(1.0 - 0.65 * np.exp(-((diag_dist - 0.45) ** 2) / 0.04), 0.35, 1.0)
-        canvas_out = np.clip(canvas_out.astype(np.float64) * shadow, 0, 255).astype(np.uint8)
-    elif condition_name == "bien_dang_phuc_tap_nhiễu":
-        # Blur + Gaussian noise
-        canvas_out = cv2.GaussianBlur(canvas_out, (5, 5), 1.2)
-        noise = np.random.normal(0, 12, canvas_out.shape).astype(np.int16)
-        canvas_out = np.clip(canvas_out.astype(np.int16) + noise, 0, 255).astype(np.uint8)
-        
-    return canvas_out, doc_mask, dst_pts
+        raise ValueError(f"Unknown condition: {condition}")
+
+    img = np.where(ink_mask, ink_val, bg)
+    img = img + rng.normal(0.0, noise_std, size=(h, w))
+    img_u8 = np.clip(np.rint(img), 0, 255).astype(np.uint8)
+    return cv2.cvtColor(img_u8, cv2.COLOR_GRAY2BGR)
 
 
-def generate_all():
-    records = []
-    
-    for i, (cond_name, cond_desc) in enumerate(CONDITIONS):
-        text_lines = SAMPLE_TEXTS[i % len(SAMPLE_TEXTS)]
-        
-        # 1. Dev synthetic
-        dev_id = f"syn_dev_{i+1:02d}"
-        doc_img, doc_mask = render_document_page(text_lines, width=420, height=580)
-        scene_dev, mask_dev, corners_dev = create_synthetic_scene(doc_img, doc_mask, cond_name, i)
-        
-        dev_img_name = f"{dev_id}.jpg"
-        dev_mask_name = f"{dev_id}_mask.png"
-        cv2.imwrite(os.path.join(SYNTHETIC_DIR, dev_img_name), scene_dev)
-        cv2.imwrite(os.path.join(SYNTHETIC_DIR, dev_mask_name), mask_dev)
-        
-        records.append({
-            "image_id": dev_id,
-            "split": "development",
-            "document_name": f"syn_doc_{i+1:02d}",
-            "condition": cond_name,
-            "is_positive": 1,
-            "filename": dev_img_name,
-            "mask_filename": dev_mask_name,
-            "x0": f"{corners_dev[0, 0]:.1f}", "y0": f"{corners_dev[0, 1]:.1f}",
-            "x1": f"{corners_dev[1, 0]:.1f}", "y1": f"{corners_dev[1, 1]:.1f}",
-            "x2": f"{corners_dev[2, 0]:.1f}", "y2": f"{corners_dev[2, 1]:.1f}",
-            "x3": f"{corners_dev[3, 0]:.1f}", "y3": f"{corners_dev[3, 1]:.1f}",
-        })
-        
-        # 2. Test synthetic
-        test_id = f"syn_test_{i+1:02d}"
-        doc_img_t, doc_mask_t = render_document_page(text_lines, width=420, height=580)
-        scene_test, mask_test, corners_test = create_synthetic_scene(doc_img_t, doc_mask_t, cond_name, i + 10)
-        
-        test_img_name = f"{test_id}.jpg"
-        test_mask_name = f"{test_id}_mask.png"
-        cv2.imwrite(os.path.join(SYNTHETIC_DIR, test_img_name), scene_test)
-        cv2.imwrite(os.path.join(SYNTHETIC_DIR, test_mask_name), mask_test)
-        
-        records.append({
-            "image_id": test_id,
-            "split": "test",
-            "document_name": f"syn_doc_{i+1:02d}",
-            "condition": cond_name,
-            "is_positive": 1,
-            "filename": test_img_name,
-            "mask_filename": test_mask_name,
-            "x0": f"{corners_test[0, 0]:.1f}", "y0": f"{corners_test[0, 1]:.1f}",
-            "x1": f"{corners_test[1, 0]:.1f}", "y1": f"{corners_test[1, 1]:.1f}",
-            "x2": f"{corners_test[2, 0]:.1f}", "y2": f"{corners_test[2, 1]:.1f}",
-            "x3": f"{corners_test[3, 0]:.1f}", "y3": f"{corners_test[3, 1]:.1f}",
-        })
-        
-    csv_path = os.path.join(SYNTHETIC_DIR, "manifest_synthetic.csv")
-    fieldnames = ["image_id", "split", "document_name", "condition", "is_positive", "filename", "mask_filename", "x0", "y0", "x1", "y1", "x2", "y2", "x3", "y3"]
-    with open(csv_path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
+def generate_all(out_dir: str = "data/synthetic", seed: int = 42) -> list[dict]:
+    rng = np.random.default_rng(seed)
+    out_path = Path(out_dir)
+    out_path.mkdir(parents=True, exist_ok=True)
+
+    layouts = [
+        (1, "development", "layout_1"),
+        (2, "development", "layout_2"),
+        (3, "test", "layout_3"),
+        (4, "test", "layout_4"),
+    ]
+    conditions = ["nen_deu", "gradient_sang", "bong_kem_nhieu"]
+
+    rows: list[dict] = []
+    counters = {"development": 0, "test": 0}
+    for layout_id, split, layout_name in layouts:
+        gt_mask = _render_layout(layout_id)
+        for cond in conditions:
+            counters[split] += 1
+            idx = counters[split]
+            prefix = "syn_dev" if split == "development" else "syn_test"
+            img_id = f"{prefix}_{idx:02d}"
+            img_name = f"{img_id}.jpg"
+            mask_name = f"{img_id}_mask.png"
+
+            syn_bgr = _apply_lighting(gt_mask, cond, rng)
+            cv2.imwrite(str(out_path / img_name), syn_bgr, [cv2.IMWRITE_JPEG_QUALITY, 95])
+            cv2.imwrite(str(out_path / mask_name), gt_mask)
+
+            rows.append(
+                {
+                    "image_id": img_id,
+                    "split": split,
+                    "layout": layout_name,
+                    "condition": cond,
+                    "filename": img_name,
+                    "mask_filename": mask_name,
+                }
+            )
+
+    manifest_path = out_path / "manifest_synthetic.csv"
+    with open(manifest_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(
+            f,
+            fieldnames=["image_id", "split", "layout", "condition", "filename", "mask_filename"],
+        )
         writer.writeheader()
-        writer.writerows(records)
-        
-    print(f"Generated 12 synthetic documents in {SYNTHETIC_DIR}:")
-    print(f"  6 development, 6 test.")
-    print(f"  Manifest written to {csv_path}")
+        writer.writerows(rows)
+
+    print(f"Generated {len(rows)} synthetic images + masks in {out_dir}")
+    return rows
 
 
 if __name__ == "__main__":
