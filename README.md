@@ -163,7 +163,7 @@ python tests/verify_ast.py
 python -m pytest tests/ -v
 ```
 
-### Chạy lại toàn bộ thực nghiệm, tạo hình và biên soạn báo cáo
+### Chạy lại toàn bộ thực nghiệm và tạo hình
 ```bash
 # 1. Sinh lại 12 ảnh tổng hợp + mask chuẩn (seed = 42)
 python scripts/generate_synthetic.py
