@@ -1,0 +1,7 @@
+hough_thresh_ratio,scoring_mode,pos_accepted,pos_total,pos_rate,mean_iou,succ_08,succ_08_rate,mean_corner_err,neg_fp,neg_total,neg_fpr,mean_runtime_ms
+0.18,area_only,28,30,0.9333,0.6068,11,0.3667,0.1006,5,6,0.8333,179.14
+0.18,edge_support+area,23,30,0.7667,0.5223,9,0.3000,0.0824,3,6,0.5000,169.19
+0.24,area_only,27,30,0.9000,0.5965,11,0.3667,0.0950,5,6,0.8333,171.12
+0.24,edge_support+area,23,30,0.7667,0.5223,9,0.3000,0.0824,3,6,0.5000,166.77
+0.30,area_only,27,30,0.9000,0.5982,11,0.3667,0.0946,5,6,0.8333,168.61
+0.30,edge_support+area,23,30,0.7667,0.5223,9,0.3000,0.0824,3,6,0.5000,160.31

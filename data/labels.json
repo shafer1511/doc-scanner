@@ -1,0 +1,1202 @@
+{
+  "dev_01": {
+    "corners": [
+      [
+        230.3,
+        144.1
+      ],
+      [
+        2187.9,
+        111.4
+      ],
+      [
+        2298.0,
+        1521.4
+      ],
+      [
+        302.0,
+        1713.5
+      ]
+    ],
+    "width": 2560,
+    "height": 1922,
+    "split": "development",
+    "condition": "nen_don_gian_du_sang"
+  },
+  "dev_02": {
+    "corners": [
+      [
+        238.2,
+        225.2
+      ],
+      [
+        1680.9,
+        261.0
+      ],
+      [
+        1859.5,
+        2354.3
+      ],
+      [
+        48.0,
+        2374.8
+      ]
+    ],
+    "width": 1922,
+    "height": 2560,
+    "split": "development",
+    "condition": "goc_chup_xien"
+  },
+  "dev_03": {
+    "corners": [
+      [
+        486.2,
+        499.5
+      ],
+      [
+        2205.9,
+        461.0
+      ],
+      [
+        2298.0,
+        1744.3
+      ],
+      [
+        491.3,
+        1848.0
+      ]
+    ],
+    "width": 2560,
+    "height": 1922,
+    "split": "development",
+    "condition": "nen_chu_nhat_gay_nhieu"
+  },
+  "dev_04": {
+    "corners": [
+      [
+        404.3,
+        292.0
+      ],
+      [
+        2374.8,
+        265.1
+      ],
+      [
+        2385.0,
+        1759.6
+      ],
+      [
+        399.2,
+        1744.3
+      ]
+    ],
+    "width": 2560,
+    "height": 1922,
+    "split": "development",
+    "condition": "bien_tuong_phan_thap"
+  },
+  "dev_05": {
+    "corners": [
+      [
+        393.8,
+        670.5
+      ],
+      [
+        1469.6,
+        767.7
+      ],
+      [
+        1911.4,
+        2129.1
+      ],
+      [
+        9.6,
+        2144.4
+      ]
+    ],
+    "width": 1922,
+    "height": 2560,
+    "split": "development",
+    "condition": "anh_sang_khong_deu_bong_do"
+  },
+  "dev_06": {
+    "corners": [
+      [
+        249.7,
+        133.1
+      ],
+      [
+        1700.1,
+        122.8
+      ],
+      [
+        1776.9,
+        2400.3
+      ],
+      [
+        169.0,
+        2349.2
+      ]
+    ],
+    "width": 1922,
+    "height": 2560,
+    "split": "development",
+    "condition": "nen_don_gian_du_sang"
+  },
+  "dev_07": {
+    "corners": [
+      [
+        30.7,
+        105.7
+      ],
+      [
+        2477.1,
+        42.3
+      ],
+      [
+        2546.2,
+        1886.4
+      ],
+      [
+        5.1,
+        1901.8
+      ]
+    ],
+    "width": 2560,
+    "height": 1922,
+    "split": "development",
+    "condition": "goc_chup_xien"
+  },
+  "dev_08": {
+    "corners": [
+      [
+        25.6,
+        245.9
+      ],
+      [
+        2226.3,
+        215.2
+      ],
+      [
+        2400.3,
+        1815.3
+      ],
+      [
+        12.8,
+        1911.4
+      ]
+    ],
+    "width": 2560,
+    "height": 1922,
+    "split": "development",
+    "condition": "nen_chu_nhat_gay_nhieu"
+  },
+  "dev_09": {
+    "corners": [
+      [
+        97.2,
+        336.2
+      ],
+      [
+        2257.0,
+        157.5
+      ],
+      [
+        2367.1,
+        1796.1
+      ],
+      [
+        191.9,
+        1905.6
+      ]
+    ],
+    "width": 2560,
+    "height": 1922,
+    "split": "development",
+    "condition": "bien_tuong_phan_thap"
+  },
+  "dev_10": {
+    "corners": [
+      [
+        422.6,
+        678.1
+      ],
+      [
+        1521.4,
+        754.9
+      ],
+      [
+        1911.4,
+        2546.2
+      ],
+      [
+        9.6,
+        2546.2
+      ]
+    ],
+    "width": 1922,
+    "height": 2560,
+    "split": "development",
+    "condition": "anh_sang_khong_deu_bong_do"
+  },
+  "dev_11": {
+    "corners": [
+      [
+        204.7,
+        245.9
+      ],
+      [
+        2308.2,
+        265.1
+      ],
+      [
+        2315.9,
+        1790.4
+      ],
+      [
+        143.3,
+        1897.9
+      ]
+    ],
+    "width": 2560,
+    "height": 1922,
+    "split": "development",
+    "condition": "nen_don_gian_du_sang"
+  },
+  "dev_12": {
+    "corners": [
+      [
+        158.7,
+        34.6
+      ],
+      [
+        2367.1,
+        215.2
+      ],
+      [
+        2315.9,
+        1725.1
+      ],
+      [
+        92.1,
+        1911.4
+      ]
+    ],
+    "width": 2560,
+    "height": 1922,
+    "split": "development",
+    "condition": "goc_chup_xien"
+  },
+  "dev_13": {
+    "corners": [
+      [
+        34.6,
+        261.0
+      ],
+      [
+        1436.9,
+        327.6
+      ],
+      [
+        1444.6,
+        2103.5
+      ],
+      [
+        119.1,
+        2187.9
+      ]
+    ],
+    "width": 1922,
+    "height": 2560,
+    "split": "development",
+    "condition": "nen_chu_nhat_gay_nhieu"
+  },
+  "dev_14": {
+    "corners": [
+      [
+        286.6,
+        182.5
+      ],
+      [
+        2272.4,
+        220.9
+      ],
+      [
+        2277.5,
+        1623.2
+      ],
+      [
+        268.7,
+        1744.3
+      ]
+    ],
+    "width": 2560,
+    "height": 1922,
+    "split": "development",
+    "condition": "bien_tuong_phan_thap"
+  },
+  "dev_15": {
+    "corners": [
+      [
+        614.7,
+        780.5
+      ],
+      [
+        1450.4,
+        875.2
+      ],
+      [
+        1911.4,
+        2195.6
+      ],
+      [
+        284.3,
+        2221.2
+      ]
+    ],
+    "width": 1922,
+    "height": 2560,
+    "split": "development",
+    "condition": "anh_sang_khong_deu_bong_do"
+  },
+  "dev_16": {
+    "corners": [
+      [
+        242.5,
+        86.0
+      ],
+      [
+        1399.9,
+        53.2
+      ],
+      [
+        1470.5,
+        1989.7
+      ],
+      [
+        64.5,
+        1866.9
+      ]
+    ],
+    "width": 1536,
+    "height": 2048,
+    "split": "development",
+    "condition": "nen_don_gian_du_sang"
+  },
+  "dev_17": {
+    "corners": [
+      [
+        171.9,
+        58.3
+      ],
+      [
+        1674.4,
+        196.5
+      ],
+      [
+        2036.8,
+        1010.0
+      ],
+      [
+        4.1,
+        1240.3
+      ]
+    ],
+    "width": 2048,
+    "height": 1536,
+    "split": "development",
+    "condition": "goc_chup_xien"
+  },
+  "dev_18": {
+    "corners": [
+      [
+        202.6,
+        147.4
+      ],
+      [
+        1343.1,
+        45.0
+      ],
+      [
+        1496.6,
+        1989.7
+      ],
+      [
+        84.4,
+        1913.9
+      ]
+    ],
+    "width": 1536,
+    "height": 2048,
+    "split": "development",
+    "condition": "nen_chu_nhat_gay_nhieu"
+  },
+  "dev_19": {
+    "corners": [
+      [
+        402.2,
+        229.3
+      ],
+      [
+        1281.7,
+        241.5
+      ],
+      [
+        1154.3,
+        1592.6
+      ],
+      [
+        291.6,
+        1477.9
+      ]
+    ],
+    "width": 1536,
+    "height": 2048,
+    "split": "development",
+    "condition": "bien_tuong_phan_thap"
+  },
+  "dev_20": {
+    "corners": [
+      [
+        376.1,
+        282.5
+      ],
+      [
+        1301.7,
+        296.8
+      ],
+      [
+        1332.4,
+        1760.4
+      ],
+      [
+        251.7,
+        1715.4
+      ]
+    ],
+    "width": 1536,
+    "height": 2048,
+    "split": "development",
+    "condition": "anh_sang_khong_deu_bong_do"
+  },
+  "dev_21": {
+    "corners": [
+      [
+        135.1,
+        421.7
+      ],
+      [
+        1492.0,
+        405.3
+      ],
+      [
+        1531.9,
+        1412.4
+      ],
+      [
+        61.4,
+        1381.7
+      ]
+    ],
+    "width": 1536,
+    "height": 2048,
+    "split": "development",
+    "condition": "nen_don_gian_du_sang"
+  },
+  "dev_22": {
+    "corners": [
+      [
+        119.7,
+        706.2
+      ],
+      [
+        1439.8,
+        296.8
+      ],
+      [
+        1531.9,
+        1858.7
+      ],
+      [
+        86.0,
+        1613.0
+      ]
+    ],
+    "width": 1536,
+    "height": 2048,
+    "split": "development",
+    "condition": "goc_chup_xien"
+  },
+  "dev_23": {
+    "corners": [
+      [
+        325.4,
+        286.6
+      ],
+      [
+        1304.8,
+        413.5
+      ],
+      [
+        1317.0,
+        1846.4
+      ],
+      [
+        224.1,
+        1928.3
+      ]
+    ],
+    "width": 1536,
+    "height": 2048,
+    "split": "development",
+    "condition": "nen_chu_nhat_gay_nhieu"
+  },
+  "dev_24": {
+    "corners": [
+      [
+        334.6,
+        372.6
+      ],
+      [
+        1215.7,
+        409.4
+      ],
+      [
+        1261.8,
+        1668.3
+      ],
+      [
+        319.3,
+        1719.5
+      ]
+    ],
+    "width": 1536,
+    "height": 2048,
+    "split": "development",
+    "condition": "bien_tuong_phan_thap"
+  },
+  "dev_25": {
+    "corners": [
+      [
+        286.6,
+        291.6
+      ],
+      [
+        1928.3,
+        119.7
+      ],
+      [
+        2042.9,
+        1399.9
+      ],
+      [
+        212.9,
+        1424.5
+      ]
+    ],
+    "width": 2048,
+    "height": 1536,
+    "split": "development",
+    "condition": "anh_sang_khong_deu_bong_do"
+  },
+  "dev_26": {
+    "corners": [
+      [
+        245.6,
+        601.8
+      ],
+      [
+        1203.4,
+        601.8
+      ],
+      [
+        1209.6,
+        1207.7
+      ],
+      [
+        236.4,
+        1203.6
+      ]
+    ],
+    "width": 1536,
+    "height": 2048,
+    "split": "development",
+    "condition": "nen_don_gian_du_sang"
+  },
+  "dev_27": {
+    "corners": [
+      [
+        303.9,
+        798.3
+      ],
+      [
+        1189.6,
+        777.9
+      ],
+      [
+        1209.6,
+        1375.6
+      ],
+      [
+        261.0,
+        1355.1
+      ]
+    ],
+    "width": 1536,
+    "height": 2048,
+    "split": "development",
+    "condition": "goc_chup_xien"
+  },
+  "dev_28": {
+    "corners": [
+      [
+        515.8,
+        605.9
+      ],
+      [
+        1185.0,
+        593.6
+      ],
+      [
+        1191.2,
+        1011.2
+      ],
+      [
+        503.5,
+        1013.3
+      ]
+    ],
+    "width": 1536,
+    "height": 2048,
+    "split": "development",
+    "condition": "nen_chu_nhat_gay_nhieu"
+  },
+  "dev_29": {
+    "corners": [
+      [
+        322.3,
+        466.7
+      ],
+      [
+        913.3,
+        446.2
+      ],
+      [
+        948.6,
+        630.5
+      ],
+      [
+        233.3,
+        650.9
+      ]
+    ],
+    "width": 1536,
+    "height": 2048,
+    "split": "development",
+    "condition": "bien_tuong_phan_thap"
+  },
+  "dev_30": {
+    "corners": [
+      [
+        386.8,
+        876.1
+      ],
+      [
+        933.3,
+        736.9
+      ],
+      [
+        928.7,
+        1248.7
+      ],
+      [
+        346.9,
+        1273.2
+      ]
+    ],
+    "width": 1536,
+    "height": 2048,
+    "split": "development",
+    "condition": "anh_sang_khong_deu_bong_do"
+  },
+  "test_01": {
+    "corners": [
+      [
+        374.5,
+        356.2
+      ],
+      [
+        1108.3,
+        401.2
+      ],
+      [
+        1102.1,
+        1146.3
+      ],
+      [
+        350.0,
+        1121.8
+      ]
+    ],
+    "width": 1536,
+    "height": 2048,
+    "split": "test",
+    "condition": "nen_don_gian_du_sang"
+  },
+  "test_02": {
+    "corners": [
+      [
+        454.4,
+        274.3
+      ],
+      [
+        1077.6,
+        151.5
+      ],
+      [
+        954.8,
+        896.6
+      ],
+      [
+        423.7,
+        913.0
+      ]
+    ],
+    "width": 1536,
+    "height": 2048,
+    "split": "test",
+    "condition": "goc_chup_xien"
+  },
+  "test_03": {
+    "corners": [
+      [
+        399.1,
+        798.3
+      ],
+      [
+        902.6,
+        802.4
+      ],
+      [
+        973.2,
+        1301.9
+      ],
+      [
+        411.4,
+        1355.1
+      ]
+    ],
+    "width": 1536,
+    "height": 2048,
+    "split": "test",
+    "condition": "nen_chu_nhat_gay_nhieu"
+  },
+  "test_04": {
+    "corners": [
+      [
+        549.5,
+        241.5
+      ],
+      [
+        1274.0,
+        491.3
+      ],
+      [
+        1108.3,
+        1244.6
+      ],
+      [
+        297.8,
+        1027.6
+      ]
+    ],
+    "width": 1536,
+    "height": 2048,
+    "split": "test",
+    "condition": "bien_tuong_phan_thap"
+  },
+  "test_05": {
+    "corners": [
+      [
+        500.4,
+        303.0
+      ],
+      [
+        1010.0,
+        409.4
+      ],
+      [
+        1154.3,
+        667.3
+      ],
+      [
+        457.4,
+        687.8
+      ]
+    ],
+    "width": 1536,
+    "height": 2048,
+    "split": "test",
+    "condition": "anh_sang_khong_deu_bong_do"
+  },
+  "test_06": {
+    "corners": [
+      [
+        242.0,
+        307.1
+      ],
+      [
+        1579.1,
+        199.6
+      ],
+      [
+        1815.3,
+        2333.8
+      ],
+      [
+        280.5,
+        2405.5
+      ]
+    ],
+    "width": 1922,
+    "height": 2560,
+    "split": "test",
+    "condition": "nen_don_gian_du_sang"
+  },
+  "test_07": {
+    "corners": [
+      [
+        92.1,
+        176.5
+      ],
+      [
+        792.1,
+        194.4
+      ],
+      [
+        780.6,
+        1204.8
+      ],
+      [
+        145.8,
+        1192.0
+      ]
+    ],
+    "width": 960,
+    "height": 1280,
+    "split": "test",
+    "condition": "goc_chup_xien"
+  },
+  "test_08": {
+    "corners": [
+      [
+        270.4,
+        56.3
+      ],
+      [
+        740.3,
+        56.3
+      ],
+      [
+        788.3,
+        757.2
+      ],
+      [
+        253.2,
+        761.0
+      ]
+    ],
+    "width": 960,
+    "height": 1280,
+    "split": "test",
+    "condition": "nen_chu_nhat_gay_nhieu"
+  },
+  "test_09": {
+    "corners": [
+      [
+        241.7,
+        28.1
+      ],
+      [
+        751.9,
+        30.7
+      ],
+      [
+        732.7,
+        782.7
+      ],
+      [
+        262.8,
+        777.6
+      ]
+    ],
+    "width": 960,
+    "height": 1280,
+    "split": "test",
+    "condition": "bien_tuong_phan_thap"
+  },
+  "test_10": {
+    "corners": [
+      [
+        209.1,
+        258.4
+      ],
+      [
+        738.4,
+        260.9
+      ],
+      [
+        721.2,
+        1002.7
+      ],
+      [
+        243.6,
+        1018.1
+      ]
+    ],
+    "width": 960,
+    "height": 1280,
+    "split": "test",
+    "condition": "anh_sang_khong_deu_bong_do"
+  },
+  "test_11": {
+    "corners": [
+      [
+        283.9,
+        79.3
+      ],
+      [
+        765.3,
+        66.5
+      ],
+      [
+        763.4,
+        741.8
+      ],
+      [
+        306.9,
+        744.4
+      ]
+    ],
+    "width": 960,
+    "height": 1280,
+    "split": "test",
+    "condition": "nen_don_gian_du_sang"
+  },
+  "test_12": {
+    "corners": [
+      [
+        264.7,
+        110.0
+      ],
+      [
+        692.4,
+        110.0
+      ],
+      [
+        721.2,
+        703.5
+      ],
+      [
+        222.5,
+        693.2
+      ]
+    ],
+    "width": 960,
+    "height": 1280,
+    "split": "test",
+    "condition": "goc_chup_xien"
+  },
+  "test_13": {
+    "corners": [
+      [
+        281.9,
+        296.7
+      ],
+      [
+        696.2,
+        289.1
+      ],
+      [
+        696.2,
+        859.5
+      ],
+      [
+        299.2,
+        864.6
+      ]
+    ],
+    "width": 960,
+    "height": 1280,
+    "split": "test",
+    "condition": "nen_chu_nhat_gay_nhieu"
+  },
+  "test_14": {
+    "corners": [
+      [
+        260.8,
+        230.2
+      ],
+      [
+        636.8,
+        194.4
+      ],
+      [
+        634.9,
+        764.8
+      ],
+      [
+        283.9,
+        752.1
+      ]
+    ],
+    "width": 960,
+    "height": 1280,
+    "split": "test",
+    "condition": "bien_tuong_phan_thap"
+  },
+  "test_15": {
+    "corners": [
+      [
+        147.7,
+        214.9
+      ],
+      [
+        817.1,
+        202.1
+      ],
+      [
+        810.4,
+        1133.2
+      ],
+      [
+        174.5,
+        1135.8
+      ]
+    ],
+    "width": 960,
+    "height": 1280,
+    "split": "test",
+    "condition": "anh_sang_khong_deu_bong_do"
+  },
+  "test_16": {
+    "corners": [
+      [
+        296.8,
+        245.9
+      ],
+      [
+        2420.8,
+        188.3
+      ],
+      [
+        2420.8,
+        1544.5
+      ],
+      [
+        220.1,
+        1529.1
+      ]
+    ],
+    "width": 2560,
+    "height": 1922,
+    "split": "test",
+    "condition": "nen_don_gian_du_sang"
+  },
+  "test_17": {
+    "corners": [
+      [
+        614.7,
+        780.5
+      ],
+      [
+        1450.4,
+        875.2
+      ],
+      [
+        1911.4,
+        2195.6
+      ],
+      [
+        284.3,
+        2221.2
+      ]
+    ],
+    "width": 1922,
+    "height": 2560,
+    "split": "test",
+    "condition": "goc_chup_xien"
+  },
+  "test_18": {
+    "corners": [
+      [
+        199.8,
+        721.6
+      ],
+      [
+        1917.2,
+        696.0
+      ],
+      [
+        1917.2,
+        2026.7
+      ],
+      [
+        130.6,
+        1888.5
+      ]
+    ],
+    "width": 1922,
+    "height": 2560,
+    "split": "test",
+    "condition": "nen_chu_nhat_gay_nhieu"
+  },
+  "test_19": {
+    "corners": [
+      [
+        407.3,
+        133.1
+      ],
+      [
+        1636.7,
+        174.0
+      ],
+      [
+        1894.1,
+        2231.4
+      ],
+      [
+        368.8,
+        2308.2
+      ]
+    ],
+    "width": 1922,
+    "height": 2560,
+    "split": "test",
+    "condition": "anh_sang_khong_deu_bong_do"
+  },
+  "test_20": {
+    "corners": [
+      [
+        207.1,
+        255.8
+      ],
+      [
+        686.6,
+        253.2
+      ],
+      [
+        673.2,
+        949.0
+      ],
+      [
+        243.6,
+        941.3
+      ]
+    ],
+    "width": 960,
+    "height": 1280,
+    "split": "test",
+    "condition": "anh_sang_khong_deu_bong_do"
+  }
+}

@@ -1,0 +1,191 @@
+{
+  "canny_sweep": {
+    "canny_visual_stats": [
+      {
+        "label": "sigma=0.8 (0.06, 0.16)",
+        "sigma": 0.8,
+        "low": 0.06,
+        "high": 0.16,
+        "edge_pixels": 32235,
+        "density_pct": 10.49
+      },
+      {
+        "label": "sigma=1.4 (0.06, 0.16) [Selected]",
+        "sigma": 1.4,
+        "low": 0.06,
+        "high": 0.16,
+        "edge_pixels": 27108,
+        "density_pct": 8.82
+      },
+      {
+        "label": "sigma=2.2 (0.06, 0.16)",
+        "sigma": 2.2,
+        "low": 0.06,
+        "high": 0.16,
+        "edge_pixels": 20952,
+        "density_pct": 6.82
+      },
+      {
+        "label": "sigma=1.4 (0.04, 0.12)",
+        "sigma": 1.4,
+        "low": 0.04,
+        "high": 0.12,
+        "edge_pixels": 29028,
+        "density_pct": 9.45
+      },
+      {
+        "label": "sigma=1.4 (0.06, 0.16) [Selected]",
+        "sigma": 1.4,
+        "low": 0.06,
+        "high": 0.16,
+        "edge_pixels": 27108,
+        "density_pct": 8.82
+      },
+      {
+        "label": "sigma=1.4 (0.10, 0.25)",
+        "sigma": 1.4,
+        "low": 0.1,
+        "high": 0.25,
+        "edge_pixels": 21655,
+        "density_pct": 7.05
+      }
+    ]
+  },
+  "ablation_visual": {
+    "pos_id": "dev_06",
+    "neg_id": "dev_33",
+    "results": {
+      "dev_06": {
+        "Full Pipeline": {
+          "status": "accepted",
+          "reason": "",
+          "edge_support": 0.8175,
+          "area_ratio": 0.7022
+        },
+        "No Gaussian": {
+          "status": "accepted",
+          "reason": "",
+          "edge_support": 0.747,
+          "area_ratio": 0.5605
+        },
+        "No Hough Supp.": {
+          "status": "rejected",
+          "reason": "short_side",
+          "edge_support": 0.0,
+          "area_ratio": 0.0
+        },
+        "No Edge Support": {
+          "status": "accepted",
+          "reason": "",
+          "edge_support": 0.8175,
+          "area_ratio": 0.7022
+        }
+      },
+      "dev_33": {
+        "Full Pipeline": {
+          "status": "rejected",
+          "reason": "short_side",
+          "edge_support": 0.0,
+          "area_ratio": 0.0
+        },
+        "No Gaussian": {
+          "status": "rejected",
+          "reason": "out_of_bounds",
+          "edge_support": 0.0,
+          "area_ratio": 0.0
+        },
+        "No Hough Supp.": {
+          "status": "rejected",
+          "reason": "no_orthogonal_line_pairs",
+          "edge_support": 0.0,
+          "area_ratio": 0.0
+        },
+        "No Edge Support": {
+          "status": "accepted",
+          "reason": "",
+          "edge_support": 0.5202,
+          "area_ratio": 0.2258
+        }
+      }
+    }
+  },
+  "multidoc_stages": {
+    "fig_stages_thesv_dev26.png": {
+      "image_id": "dev_26",
+      "group": "the_sinh_vien",
+      "status": "accepted",
+      "iou": "0.9828",
+      "corner_error_norm": "0.0021",
+      "edge_support": 0.9712,
+      "area_ratio": 0.1825,
+      "score": 0.6952
+    },
+    "fig_stages_sign_dev21.png": {
+      "image_id": "dev_21",
+      "group": "giay_to_dau_do",
+      "status": "accepted",
+      "iou": "0.5601",
+      "corner_error_norm": "0.1304",
+      "edge_support": 0.7539,
+      "area_ratio": 0.6544,
+      "score": 0.7191
+    },
+    "fig_stages_bus_test01.png": {
+      "image_id": "test_01",
+      "group": "ve_xe_buyt",
+      "status": "accepted",
+      "iou": "0.6628",
+      "corner_error_norm": "0.0723",
+      "edge_support": 0.7533,
+      "area_ratio": 0.2636,
+      "score": 0.5819
+    },
+    "fig_stages_leaf_dev16.png": {
+      "image_id": "dev_16",
+      "group": "so_leaf",
+      "status": "accepted",
+      "iou": "0.9830",
+      "corner_error_norm": "0.0046",
+      "edge_support": 0.852,
+      "area_ratio": 0.7674,
+      "score": 0.8224
+    }
+  },
+  "crop_comparisons": {
+    "dev_26": {
+      "label": "Student Card (Watermark/Gradient)",
+      "otsu_T": 144,
+      "otsu_sauvola_diff_pct": 11.44
+    },
+    "test_01": {
+      "label": "Bus Ticket (Dot-Matrix Ink)",
+      "otsu_T": 164,
+      "otsu_sauvola_diff_pct": 32.22
+    },
+    "dev_10": {
+      "label": "Shadow Document (Uneven Light)",
+      "otsu_T": 166,
+      "otsu_sauvola_diff_pct": 3.79
+    }
+  },
+  "runtime_profile": {
+    "stage_mean_ms": {
+      "canny": 45.06,
+      "hough": 58.39,
+      "quad": 41.56,
+      "warping": 3.63,
+      "thresholding": 28.21
+    },
+    "stage_share_pct": {
+      "canny": 25.5,
+      "hough": 33.0,
+      "quad": 23.5,
+      "warping": 2.1,
+      "thresholding": 16.0
+    },
+    "accepted_mean_total_ms": 185.1,
+    "rejected_mean_total_ms": 123.56,
+    "num_accepted": 26,
+    "num_rejected": 10
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "stage_mean_ms": {
+    "canny": 45.06,
+    "hough": 58.39,
+    "quad": 41.56,
+    "warping": 3.63,
+    "thresholding": 28.21
+  },
+  "stage_share_pct": {
+    "canny": 25.5,
+    "hough": 33.0,
+    "quad": 23.5,
+    "warping": 2.1,
+    "thresholding": 16.0
+  },
+  "accepted_mean_total_ms": 185.1,
+  "rejected_mean_total_ms": 123.56,
+  "num_accepted": 26,
+  "num_rejected": 10
+}
