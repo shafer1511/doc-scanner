@@ -6,6 +6,18 @@
 
 ---
 
+## 0. Bản đồ nộp bài nhanh (Đối chiếu 5 mục yêu cầu đồ án)
+
+| Mục | Yêu cầu nộp bài | Vị trí tệp / thư mục tương ứng (bấm mở trực tiếp) |
+| :---: | :--- | :--- |
+| **1** | **Source** (thuật toán tự cài, kiểm tra, thí nghiệm, ảnh trung gian, outputs) | [src/core/](src/core/) · [src/baseline/](src/baseline/) · [run_pipeline.py](run_pipeline.py) · [tests/](tests/) · [scripts/](scripts/) · [outputs/intermediates/](outputs/intermediates/) |
+| **2** | **Dữ liệu & Kết quả** (ảnh thật, split, nhãn GT 4 góc, mask synthetic, cấu hình baseline/cuối/ablation, CSV & ảnh minh chứng) | [data/development/](data/development/) · [data/test/](data/test/) · [data/labels.json](data/labels.json) · [data/synthetic/](data/synthetic/) · [outputs/frozen_config.json](outputs/frozen_config.json) · [outputs/baseline_config.json](outputs/baseline_config.json) · [outputs/ablation_configs.json](outputs/ablation_configs.json) · [outputs/results_development.csv](outputs/results_development.csv) · [outputs/results_test.csv](outputs/results_test.csv) · [outputs/figures/](outputs/figures/) |
+| **3** | **Thông tin chung & Hướng dẫn** (thành viên, đóng góp, dependency, seed, lệnh chạy đường dẫn tương đối) | Xem Mục **1**, **2**, **4**, **5** ngay trong [README.md](README.md) và [requirements.txt](requirements.txt) |
+| **4** | **Báo cáo PDF** (pipeline, tham số, so sánh, 6 ca phân tích, kết luận, tài liệu tham khảo) | [outputs/Bao_cao_Giua_Ky_Document_Scanner.pdf](outputs/Bao_cao_Giua_Ky_Document_Scanner.pdf) *(kèm bản Word [.docx](outputs/Bao_cao_Giua_Ky_Document_Scanner.docx))* |
+| **5** | **Slides trình chiếu** (mục tiêu, pipeline, phần tự cài, dữ liệu, thí nghiệm & kết quả tiêu biểu) | [outputs/Slides_Giua_Ky_Document_Scanner.pptx](outputs/Slides_Giua_Ky_Document_Scanner.pptx) *(kèm bản PDF [.pdf](outputs/Slides_Giua_Ky_Document_Scanner.pdf))* |
+
+---
+
 ## 1. Thông tin thành viên và Bảng đóng góp
 
 | STT | Họ và tên | MSSV | Tỷ lệ đóng góp | Nhiệm vụ chính |
@@ -31,6 +43,7 @@
   - `matplotlib==3.10.5`
   - `pillow==11.3.0`
   - `python-docx==1.2.0`
+  - `python-pptx==1.0.2`
   - `lxml==6.1.3`
   - `pytest==9.2.0`
 
@@ -103,6 +116,7 @@ Toàn bộ thuật toán lõi trong `src/core/` được tự cài đặt từ m
 │   ├── build_labels_json.py               # Tổng hợp nhãn tọa độ vào data/labels.json
 │   ├── render_gt_verify.py                # Xuất ảnh kiểm tra trực quan ground-truth
 │   ├── build_report.py                    # Biên dịch báo cáo .md và .docx chuẩn OOXML
+│   ├── build_slides.py                    # Tạo bộ trình chiếu PowerPoint 12 slides (.pptx) & xuất PDF
 │   └── audit_report.py                    # Kiểm tra chất lượng, traceability CSV và xuất PDF từ Word COM
 ├── outputs/
 │   ├── frozen_config.json                 # Cấu hình đóng băng trên tập Development
@@ -124,7 +138,9 @@ Toàn bộ thuật toán lõi trong `src/core/` được tự cài đặt từ m
 │   ├── intermediates/                     # Ảnh trung gian từng bước cho 8 mẫu tiêu biểu
 │   ├── Bao_cao_Giua_Ky_Document_Scanner.md
 │   ├── Bao_cao_Giua_Ky_Document_Scanner.docx
-│   └── Bao_cao_Giua_Ky_Document_Scanner.pdf
+│   ├── Bao_cao_Giua_Ky_Document_Scanner.pdf
+│   ├── Slides_Giua_Ky_Document_Scanner.pptx
+│   └── Slides_Giua_Ky_Document_Scanner.pdf
 ├── run_pipeline.py                        # CLI chạy batch pipeline và xuất CSV / ảnh trung gian
 ├── requirements.txt                       # Danh sách phiên bản thư viện chuẩn
 └── README.md
@@ -159,9 +175,10 @@ python scripts/run_all_experiments.py
 python scripts/generate_figures.py
 python scripts/generate_rich_visuals.py
 
-# 4. Tạo báo cáo Markdown + Word (.docx) và kiểm duyệt + xuất PDF
+# 4. Tạo báo cáo Markdown + Word (.docx), kiểm duyệt + xuất PDF và sinh Slides trình chiếu
 python scripts/build_report.py
 python scripts/audit_report.py
+python scripts/build_slides.py --export-pdf
 ```
 
 ### Chạy riêng CLI pipeline trên một tập bất kỳ
