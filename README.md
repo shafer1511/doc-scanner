@@ -175,10 +175,6 @@ python scripts/run_all_experiments.py
 python scripts/generate_figures.py
 python scripts/generate_rich_visuals.py
 
-# 4. Tạo báo cáo Markdown + Word (.docx), kiểm duyệt + xuất PDF và sinh Slides trình chiếu
-python scripts/build_report.py
-python scripts/audit_report.py
-python scripts/build_slides.py --export-pdf
 ```
 
 ### Chạy riêng CLI pipeline trên một tập bất kỳ
